@@ -3,7 +3,7 @@ import * as PIXI from 'pixi.js';
 import { 
   Search, Heart, BookOpen, ChevronRight, Share2, Filter, X, 
   ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle,
-  LogOut, Edit, Trash2, PauseCircle, Send
+  LogOut, Edit, Trash2, PauseCircle, Send, UploadCloud, Loader2
 } from 'lucide-react';
 
 // --- Mock Data 模擬資料庫 ---
@@ -65,7 +65,7 @@ const Navbar = ({ currentView, setCurrentView, user }) => {
         )}
 
         <button 
-          onClick={() => setCurrentView(user ? 'dashboard' : 'auth')}
+          onClick={() => setCurrentView(user ? 'donate' : 'auth')}
           className="bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all"
         >
           我要捐書
@@ -122,7 +122,7 @@ const PixiIllustration = () => {
 };
 
 // --- 視圖 1：首頁 (HomeView) ---
-const HomeView = ({ setCurrentView, onBookClick }) => {
+const HomeView = ({ setCurrentView, onBookClick, user }) => {
   const [stats, setStats] = useState({ donated: 0, claimed: 0 });
   useEffect(() => {
     let currentDonated = 0, currentClaimed = 0;
@@ -155,7 +155,7 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
             <button onClick={() => setCurrentView('search')} className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-700 hover:-translate-y-1 shadow-xl shadow-emerald-200 transition-all duration-300">
               <Search className="w-5 h-5" /> 立即尋書
             </button>
-            <button onClick={() => setCurrentView('auth')} className="flex items-center justify-center gap-2 bg-white text-emerald-700 border-2 border-emerald-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 hover:-translate-y-1 shadow-lg shadow-slate-100 transition-all duration-300">
+            <button onClick={() => setCurrentView(user ? 'donate' : 'auth')} className="flex items-center justify-center gap-2 bg-white text-emerald-700 border-2 border-emerald-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 hover:-translate-y-1 shadow-lg shadow-slate-100 transition-all duration-300">
               <Share2 className="w-5 h-5" /> 我要捐贈
             </button>
           </div>
@@ -217,7 +217,6 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
 };
 
 // --- 視圖 2：書籍搜尋大廳 (SearchView) ---
-// (與 v0.2.0 完全相同，保持清爽)
 const SearchView = ({ onBookClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -347,7 +346,6 @@ const SearchView = ({ onBookClick }) => {
 };
 
 // --- 視圖 3：書籍詳情頁 (BookDetailView) ---
-// (與 v0.2.0 完全相同)
 const BookDetailView = ({ book, onBack }) => {
   const [showContact, setShowContact] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -482,15 +480,12 @@ const AuthView = ({ setCurrentView, setUser }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // 切換登入/註冊時清除錯誤與資料
     setErrors({});
     setFormData({ email: '', password: '', studentId: '', location: '' });
   }, [isLogin]);
 
-  // 即時表單驗證邏輯
   const validateField = (name, value) => {
     let newErrors = { ...errors };
-
     switch (name) {
       case 'email':
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -505,7 +500,6 @@ const AuthView = ({ setCurrentView, setUser }) => {
         break;
       case 'studentId':
         if (!isLogin) {
-          // 學號驗證：假設為 7-10 碼英數字
           const idRegex = /^[a-zA-Z0-9]{7,10}$/;
           if (!value) newErrors.studentId = '請輸入學號';
           else if (!idRegex.test(value)) newErrors.studentId = '學號格式不正確 (請輸入7-10碼英數字)';
@@ -532,16 +526,12 @@ const AuthView = ({ setCurrentView, setUser }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // 送出前觸發所有欄位的驗證
     validateField('email', formData.email);
     validateField('password', formData.password);
     if (!isLogin) {
       validateField('studentId', formData.studentId);
       validateField('location', formData.location);
     }
-
-    // 檢查是否有錯誤 (因 state 更新非同步，這裡重新算一次)
     const currentErrors = {};
     if (!formData.email) currentErrors.email = '請輸入 Email 信箱';
     if (!formData.password) currentErrors.password = '請輸入密碼';
@@ -549,10 +539,7 @@ const AuthView = ({ setCurrentView, setUser }) => {
     if (!isLogin && !formData.location) currentErrors.location = '請填寫主要面交地點';
 
     if (Object.keys(currentErrors).length === 0 && Object.keys(errors).length === 0) {
-      // 成功驗證，模擬登入/註冊成功並跳轉
       alert(isLogin ? '登入成功！歡迎回來。' : '註冊成功！準備開始流動知識。');
-      
-      // 寫入模擬使用者資料
       setUser({ 
         name: isLogin ? '王同學' : '新同學', 
         studentId: formData.studentId || 's1101234',
@@ -568,117 +555,52 @@ const AuthView = ({ setCurrentView, setUser }) => {
 
   return (
     <div className="min-h-[calc(100vh-80px)] flex animate-in fade-in duration-500">
-      
-      {/* 左側：品牌故事大圖 (僅在桌機顯示) */}
       <div className="hidden lg:flex w-1/2 relative bg-emerald-900 overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=1000" 
-          alt="Library" 
-          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
-        />
+        <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=1000" alt="Library" className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay" />
         <div className="relative z-10 flex flex-col justify-center px-16 xl:px-24 h-full">
           <BookOpen className="w-16 h-16 text-emerald-400 mb-8" />
-          <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-6">
-            讓每本書都能<br/>遇見下一個讀者。
-          </h1>
-          <p className="text-lg text-emerald-100/80 leading-relaxed max-w-md">
-            加入書活平台，建立你的專屬知識存摺。只需使用學校 Email 與學號註冊，即可輕鬆捐贈與尋找所需的教材資源。
-          </p>
+          <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-6">讓每本書都能<br/>遇見下一個讀者。</h1>
+          <p className="text-lg text-emerald-100/80 leading-relaxed max-w-md">加入書活平台，建立你的專屬知識存摺。只需使用學校 Email 與學號註冊，即可輕鬆捐贈與尋找所需的教材資源。</p>
         </div>
       </div>
-
-      {/* 右側：表單區 */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 xl:p-24 bg-white">
         <div className="w-full max-w-md">
-          
-          <button onClick={() => setCurrentView('home')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 font-medium mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> 返回首頁
-          </button>
-
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">
-            {isLogin ? '歡迎回來' : '建立新帳號'}
-          </h2>
-          <p className="text-slate-500 mb-8">
-            {isLogin ? '請輸入您的帳號密碼以繼續' : '加入書活，與校園社群分享知識'}
-          </p>
-
-          {/* 表單切換 Tabs */}
+          <button onClick={() => setCurrentView('home')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 font-medium mb-8 transition-colors"><ArrowLeft className="w-4 h-4" /> 返回首頁</button>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">{isLogin ? '歡迎回來' : '建立新帳號'}</h2>
+          <p className="text-slate-500 mb-8">{isLogin ? '請輸入您的帳號密碼以繼續' : '加入書活，與校園社群分享知識'}</p>
           <div className="flex p-1 bg-slate-100 rounded-xl mb-8">
-            <button 
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              登入
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              註冊
-            </button>
+            <button onClick={() => setIsLogin(true)} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>登入</button>
+            <button onClick={() => setIsLogin(false)} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>註冊</button>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* 註冊專屬欄位：學號 */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">學號 <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" name="studentId" value={formData.studentId} onChange={handleChange}
-                  placeholder="例如: s1101234"
-                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.studentId ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
-                />
+                <input type="text" name="studentId" value={formData.studentId} onChange={handleChange} placeholder="例如: s1101234" className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.studentId ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`} />
                 {errors.studentId && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.studentId}</p>}
               </div>
             )}
-
-            {/* Email */}
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-1.5">Email 信箱 <span className="text-red-500">*</span></label>
-              <input 
-                type="email" name="email" value={formData.email} onChange={handleChange}
-                placeholder="school@example.edu.tw"
-                className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
-              />
+              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="school@example.edu.tw" className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`} />
               {errors.email && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.email}</p>}
             </div>
-
-            {/* 密碼 */}
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1.5 flex justify-between">
-                <span>密碼 <span className="text-red-500">*</span></span>
-                {isLogin && <a href="#" className="text-emerald-600 font-medium hover:underline">忘記密碼？</a>}
-              </label>
-              <input 
-                type="password" name="password" value={formData.password} onChange={handleChange}
-                placeholder="••••••••"
-                className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
-              />
+              <label className="block text-sm font-bold text-slate-700 mb-1.5 flex justify-between"><span>密碼 <span className="text-red-500">*</span></span>{isLogin && <a href="#" className="text-emerald-600 font-medium hover:underline">忘記密碼？</a>}</label>
+              <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`} />
               {errors.password && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.password}</p>}
             </div>
-
-            {/* 註冊專屬欄位：主要面交地點 */}
             {!isLogin && (
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">主要面交地點 <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" name="location" value={formData.location} onChange={handleChange}
-                  placeholder="例如: 圖書館大廳、資傳系辦"
-                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.location ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
-                />
+                <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="例如: 圖書館大廳、資傳系辦" className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.location ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`} />
                 {errors.location && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.location}</p>}
               </div>
             )}
-
-            {/* 送出按鈕 */}
-            <button 
-              type="submit"
-              className="w-full bg-emerald-600 text-white font-bold text-lg py-3.5 rounded-xl mt-4 hover:bg-emerald-700 hover:-translate-y-0.5 shadow-lg shadow-emerald-200 transition-all duration-300 flex items-center justify-center gap-2"
-            >
+            <button type="submit" className="w-full bg-emerald-600 text-white font-bold text-lg py-3.5 rounded-xl mt-4 hover:bg-emerald-700 hover:-translate-y-0.5 shadow-lg shadow-emerald-200 transition-all duration-300 flex items-center justify-center gap-2">
               {isLogin ? '登入系統' : '註冊帳號'} <ChevronRight className="w-5 h-5" />
             </button>
           </form>
-          
         </div>
       </div>
     </div>
@@ -689,47 +611,28 @@ const AuthView = ({ setCurrentView, setUser }) => {
 const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
   const [activeTab, setActiveTab] = useState('manage');
   
-  // 模擬使用者上傳的書籍庫存資料
   const [myBooks, setMyBooks] = useState([
     { id: 101, title: '資料庫系統原理', coverUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=150', date: '2026/04/01', status: 'available' },
     { id: 102, title: '計算機組織與設計', coverUrl: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=150', date: '2026/03/15', status: 'reserved' },
     { id: 103, title: 'Python 機器學習', coverUrl: 'https://images.unsplash.com/photo-1555662800-87311b3a51d9?auto=format&fit=crop&q=80&w=150', date: '2026/02/20', status: 'shipped' },
   ]);
 
-  // 操作處理邏輯
-  const handleStatusToggle = (id, newStatus) => {
-    setMyBooks(myBooks.map(b => b.id === id ? { ...b, status: newStatus } : b));
-  };
-  
-  const handleDelete = (id) => {
-    if (confirm('確定要從資料庫中刪除這筆捐贈紀錄嗎？')) {
-      setMyBooks(myBooks.filter(b => b.id !== id));
-    }
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setCurrentView('home');
-  };
+  const handleStatusToggle = (id, newStatus) => setMyBooks(myBooks.map(b => b.id === id ? { ...b, status: newStatus } : b));
+  const handleDelete = (id) => { if (confirm('確定要從資料庫中刪除這筆捐贈紀錄嗎？')) setMyBooks(myBooks.filter(b => b.id !== id)); };
+  const handleLogout = () => { setUser(null); setCurrentView('home'); };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-in fade-in duration-500">
-      
-      {/* 頂部標題與登出按鈕 */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">個人管理後台</h1>
           <p className="text-slate-500 mt-1">歡迎回來，{user.name} ({user.studentId})</p>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition-colors"
-        >
+        <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition-colors">
           <LogOut className="w-4 h-4" /> 登出
         </button>
       </div>
 
-      {/* 個人數據統計卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
           <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><ThumbsUp className="w-7 h-7"/></div>
@@ -745,23 +648,19 @@ const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
         </div>
       </div>
 
-      {/* 標籤切換 */}
       <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit mb-6">
         <button onClick={() => setActiveTab('manage')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'manage' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>我的捐贈書籍</button>
         <button onClick={() => setActiveTab('saved')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'saved' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>收藏清單</button>
       </div>
 
-      {/* 管理表格 (Table View) */}
       {activeTab === 'manage' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
-                  <th className="p-5 font-bold">封面與書名</th>
-                  <th className="p-5 font-bold">上傳日期</th>
-                  <th className="p-5 font-bold">目前狀態</th>
-                  <th className="p-5 font-bold text-right">快速操作</th>
+                  <th className="p-5 font-bold">封面與書名</th><th className="p-5 font-bold">上傳日期</th>
+                  <th className="p-5 font-bold">目前狀態</th><th className="p-5 font-bold text-right">快速操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -773,36 +672,19 @@ const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
                     </td>
                     <td className="p-5 text-slate-500 font-medium">{book.date}</td>
                     <td className="p-5">
-                      <span className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center w-fit gap-1.5 ${
-                        book.status === 'available' ? 'bg-emerald-100 text-emerald-700' : 
-                        book.status === 'reserved' ? 'bg-amber-100 text-amber-700' : 
-                        book.status === 'paused' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {book.status === 'available' ? <><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>待領取</> : 
-                         book.status === 'reserved' ? <><div className="w-1.5 h-1.5 rounded-full bg-amber-500"/>已預約</> : 
-                         book.status === 'paused' ? <><PauseCircle className="w-3 h-3"/>已暫停</> : <><CheckCircle2 className="w-3 h-3"/>已送出</>}
+                      <span className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center w-fit gap-1.5 ${book.status === 'available' ? 'bg-emerald-100 text-emerald-700' : book.status === 'reserved' ? 'bg-amber-100 text-amber-700' : book.status === 'paused' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'}`}>
+                        {book.status === 'available' ? <><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>待領取</> : book.status === 'reserved' ? <><div className="w-1.5 h-1.5 rounded-full bg-amber-500"/>已預約</> : book.status === 'paused' ? <><PauseCircle className="w-3 h-3"/>已暫停</> : <><CheckCircle2 className="w-3 h-3"/>已送出</>}
                       </span>
                     </td>
                     <td className="p-5">
-                      {/* 操作按鈕群：桌機版滑鼠移入時顯示，手機版常駐 */}
                       <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                         <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="編輯內容"><Edit className="w-4 h-4"/></button>
                         {book.status !== 'shipped' && (
                           <>
-                            <button 
-                              onClick={() => handleStatusToggle(book.id, book.status === 'paused' ? 'available' : 'paused')} 
-                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" 
-                              title={book.status === 'paused' ? '恢復捐贈' : '暫停捐贈'}
-                            >
+                            <button onClick={() => handleStatusToggle(book.id, book.status === 'paused' ? 'available' : 'paused')} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title={book.status === 'paused' ? '恢復捐贈' : '暫停捐贈'}>
                               {book.status === 'paused' ? <BookOpen className="w-4 h-4"/> : <PauseCircle className="w-4 h-4"/>}
                             </button>
-                            <button 
-                              onClick={() => handleStatusToggle(book.id, 'shipped')} 
-                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
-                              title="標記為已送出"
-                            >
-                              <Send className="w-4 h-4"/>
-                            </button>
+                            <button onClick={() => handleStatusToggle(book.id, 'shipped')} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="標記為已送出"><Send className="w-4 h-4"/></button>
                           </>
                         )}
                         <button onClick={() => handleDelete(book.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除紀錄"><Trash2 className="w-4 h-4"/></button>
@@ -816,10 +698,8 @@ const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
         </div>
       )}
 
-      {/* 收藏清單 (Saved Books View) */}
       {activeTab === 'saved' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* 取 MOCK_BOOKS 的前四筆來當作已收藏的假資料 */}
           {MOCK_BOOKS.slice(0, 4).map(book => (
             <div key={book.id} onClick={() => onBookClick(book)} className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col">
               <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
@@ -840,6 +720,264 @@ const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
   );
 };
 
+// --- 視圖 6：我要捐書表單 (DonateView) ---
+const DonateView = ({ setCurrentView }) => {
+  const [isbn, setIsbn] = useState('');
+  const [isFetching, setIsFetching] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    title: '',
+    author: '',
+    category: CATEGORIES[0],
+    description: ''
+  });
+
+  // 串接 Google Books API 自動填寫
+  const handleIsbnFetch = async () => {
+    if (!isbn.trim()) return alert('請先輸入 ISBN 碼');
+    
+    setIsFetching(true);
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        const bookInfo = data.items[0].volumeInfo;
+        setFormData(prev => ({
+          ...prev,
+          title: bookInfo.title || '',
+          author: bookInfo.authors ? bookInfo.authors.join(', ') : '',
+        }));
+        
+        // 若有封面且使用者尚未上傳圖片，則預設帶入 API 提供的封面
+        if (!imagePreview && bookInfo.imageLinks?.thumbnail) {
+          // Google Books API 通常回傳 http，需確保轉換成 https 以免 mixed content 警告
+          setImagePreview(bookInfo.imageLinks.thumbnail.replace('http:', 'https:'));
+        }
+      } else {
+        alert('找不到此 ISBN 的相關書籍資訊，請手動填寫。');
+      }
+    } catch (error) {
+      console.error("API Fetch Error:", error);
+      alert('自動抓取失敗，請確認網路狀態或手動填寫。');
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // 拖曳上傳相關邏輯
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = (file) => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      alert('請上傳圖片格式的檔案 (如 JPG, PNG)');
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.title) return alert('請填寫書名');
+    if (!imagePreview) return alert('請上傳書籍照片');
+    
+    // 模擬成功送出
+    alert('書籍上架成功！感謝您的分享！');
+    setCurrentView('dashboard');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 animate-in fade-in duration-500">
+      <button 
+        onClick={() => setCurrentView('dashboard')}
+        className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-medium mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" /> 返回管理後台
+      </button>
+
+      <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+        
+        {/* 標題區塊 */}
+        <div className="bg-emerald-600 px-8 py-10 text-white">
+          <h1 className="text-3xl font-extrabold mb-2">我要捐書</h1>
+          <p className="text-emerald-100 text-lg">分享您的閒置書籍，讓知識流向需要的人。</p>
+        </div>
+
+        {/* 表單內容區塊 */}
+        <div className="p-8 lg:p-12">
+          
+          {/* ISBN 自動抓取特色功能 */}
+          <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-2xl">
+            <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+              <Search className="w-4 h-4 text-emerald-600" /> 
+              ISBN 自動抓取 (推薦)
+            </label>
+            <div className="flex gap-3">
+              <input 
+                type="text" 
+                value={isbn}
+                onChange={(e) => setIsbn(e.target.value)}
+                placeholder="請輸入書籍背面的 ISBN 13 碼" 
+                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
+              />
+              <button 
+                onClick={handleIsbnFetch}
+                disabled={isFetching || !isbn}
+                className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
+              >
+                {isFetching ? <Loader2 className="w-5 h-5 animate-spin" /> : '自動填入'}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">系統將串接 Google Books API 自動為您帶入書名與作者。</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* 書名與作者 */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">書名 <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" name="title" value={formData.title} onChange={handleChange} required
+                    placeholder="請輸入完整書名"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">作者</label>
+                  <input 
+                    type="text" name="author" value={formData.author} onChange={handleChange}
+                    placeholder="請輸入作者姓名"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">書籍類別 <span className="text-red-500">*</span></label>
+                  <select 
+                    name="category" value={formData.category} onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium text-slate-700 cursor-pointer appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 圖片上傳區塊 (Drag & Drop) */}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">書籍實體照片 <span className="text-red-500">*</span></label>
+                <div 
+                  className={`relative w-full h-full min-h-[220px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-6 text-center transition-all cursor-pointer overflow-hidden
+                    ${dragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 hover:border-emerald-400 bg-slate-50'}
+                  `}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+                  />
+                  
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Preview" className="absolute inset-0 w-full h-full object-contain p-2 z-10 bg-slate-50" />
+                  ) : (
+                    <div className="z-10 pointer-events-none">
+                      <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 text-emerald-600">
+                        <UploadCloud className="w-8 h-8" />
+                      </div>
+                      <p className="text-slate-700 font-bold text-lg mb-1">點擊或拖曳圖片至此</p>
+                      <p className="text-slate-500 text-sm">支援 JPG, PNG 格式 (最大 5MB)</p>
+                    </div>
+                  )}
+                  
+                  {/* Hover 提示更換圖片 */}
+                  {imagePreview && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity z-20 flex items-center justify-center pointer-events-none">
+                      <p className="text-white font-bold flex items-center gap-2"><UploadCloud className="w-5 h-5"/> 點擊更換圖片</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 書況補充文本框 */}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between">
+                <span>書況補充描述</span>
+                <span className="text-slate-400 font-normal">選填</span>
+              </label>
+              <textarea 
+                name="description" value={formData.description} onChange={handleChange}
+                placeholder="例如：內頁有少許螢光筆劃記，九成新。方便約在圖書館面交..."
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white resize-y"
+              />
+            </div>
+
+            {/* 提交按鈕 */}
+            <div className="pt-6 border-t border-slate-100 flex justify-end gap-4">
+              <button 
+                type="button" 
+                onClick={() => setCurrentView('dashboard')}
+                className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                取消
+              </button>
+              <button 
+                type="submit" 
+                className="px-10 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5"
+              >
+                確認送出，發布捐贈
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // --- 主應用程式入口 (App Routing Logic) ---
 export default function App() {
@@ -854,11 +992,12 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden">
       <Navbar currentView={currentView} setCurrentView={setCurrentView} user={user} />
       
-      {currentView === 'home' && <HomeView setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
+      {currentView === 'home' && <HomeView setCurrentView={setCurrentView} onBookClick={handleBookClick} user={user} />}
       {currentView === 'search' && <SearchView onBookClick={handleBookClick} />}
       {currentView === 'detail' && selectedBook && <BookDetailView book={selectedBook} onBack={handleBackToList} />}
       {currentView === 'auth' && <AuthView setCurrentView={setCurrentView} setUser={setUser} />}
       {currentView === 'dashboard' && user && <DashboardView user={user} setUser={setUser} setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
+      {currentView === 'donate' && <DonateView setCurrentView={setCurrentView} />}
 
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
