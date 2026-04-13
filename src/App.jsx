@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
 import { 
   Search, Heart, BookOpen, ChevronRight, Share2, Filter, X, 
-  ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle
+  ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle,
+  LogOut, Edit, Trash2, PauseCircle, Send
 } from 'lucide-react';
 
 // --- Mock Data 模擬資料庫 ---
@@ -20,7 +21,7 @@ const MOCK_BOOKS = [
 const CATEGORIES = ['資工', '設計', '文學', '通識', '大一必修'];
 
 // --- 共用組件：導覽列 Navbar ---
-const Navbar = ({ currentView, setCurrentView }) => {
+const Navbar = ({ currentView, setCurrentView, user }) => {
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center">
       <div 
@@ -40,8 +41,8 @@ const Navbar = ({ currentView, setCurrentView }) => {
         </div>
       )}
 
-      <div className="flex gap-3">
-        {currentView !== 'auth' && (
+      <div className="flex gap-3 items-center">
+        {currentView !== 'auth' && !user && (
           <button 
             onClick={() => setCurrentView('auth')}
             className="hidden sm:block text-emerald-700 font-medium px-4 py-2 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -49,8 +50,22 @@ const Navbar = ({ currentView, setCurrentView }) => {
             登入
           </button>
         )}
+        
+        {user && (
+          <div 
+            className="flex items-center gap-2 cursor-pointer p-1.5 pr-3 rounded-full bg-slate-100 hover:bg-emerald-50 transition-colors border border-slate-200 hover:border-emerald-200"
+            onClick={() => setCurrentView('dashboard')}
+            title="前往個人後台"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-800 font-bold text-sm">
+              {user.name.charAt(0)}
+            </div>
+            <span className="hidden sm:block font-bold text-slate-700 text-sm">{user.name}</span>
+          </div>
+        )}
+
         <button 
-          onClick={() => setCurrentView('auth')}
+          onClick={() => setCurrentView(user ? 'dashboard' : 'auth')}
           className="bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all"
         >
           我要捐書
@@ -461,7 +476,7 @@ const BookDetailView = ({ book, onBack }) => {
 
 
 // --- 視圖 4：登入與註冊頁 (AuthView) ---
-const AuthView = ({ setCurrentView }) => {
+const AuthView = ({ setCurrentView, setUser }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', studentId: '', location: '' });
   const [errors, setErrors] = useState({});
@@ -534,9 +549,18 @@ const AuthView = ({ setCurrentView }) => {
     if (!isLogin && !formData.location) currentErrors.location = '請填寫主要面交地點';
 
     if (Object.keys(currentErrors).length === 0 && Object.keys(errors).length === 0) {
-      // 成功驗證，模擬登入/註冊成功並跳轉回首頁
+      // 成功驗證，模擬登入/註冊成功並跳轉
       alert(isLogin ? '登入成功！歡迎回來。' : '註冊成功！準備開始流動知識。');
-      setCurrentView('home');
+      
+      // 寫入模擬使用者資料
+      setUser({ 
+        name: isLogin ? '王同學' : '新同學', 
+        studentId: formData.studentId || 's1101234',
+        email: formData.email,
+        likes: 128, 
+        dislikes: 3
+      });
+      setCurrentView('dashboard');
     } else {
       setErrors(prev => ({...prev, ...currentErrors}));
     }
@@ -661,23 +685,180 @@ const AuthView = ({ setCurrentView }) => {
   );
 };
 
+// --- 視圖 5：個人管理後台 (DashboardView) ---
+const DashboardView = ({ user, setUser, setCurrentView, onBookClick }) => {
+  const [activeTab, setActiveTab] = useState('manage');
+  
+  // 模擬使用者上傳的書籍庫存資料
+  const [myBooks, setMyBooks] = useState([
+    { id: 101, title: '資料庫系統原理', coverUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=150', date: '2026/04/01', status: 'available' },
+    { id: 102, title: '計算機組織與設計', coverUrl: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=150', date: '2026/03/15', status: 'reserved' },
+    { id: 103, title: 'Python 機器學習', coverUrl: 'https://images.unsplash.com/photo-1555662800-87311b3a51d9?auto=format&fit=crop&q=80&w=150', date: '2026/02/20', status: 'shipped' },
+  ]);
+
+  // 操作處理邏輯
+  const handleStatusToggle = (id, newStatus) => {
+    setMyBooks(myBooks.map(b => b.id === id ? { ...b, status: newStatus } : b));
+  };
+  
+  const handleDelete = (id) => {
+    if (confirm('確定要從資料庫中刪除這筆捐贈紀錄嗎？')) {
+      setMyBooks(myBooks.filter(b => b.id !== id));
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentView('home');
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-in fade-in duration-500">
+      
+      {/* 頂部標題與登出按鈕 */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900">個人管理後台</h1>
+          <p className="text-slate-500 mt-1">歡迎回來，{user.name} ({user.studentId})</p>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition-colors"
+        >
+          <LogOut className="w-4 h-4" /> 登出
+        </button>
+      </div>
+
+      {/* 個人數據統計卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
+          <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><ThumbsUp className="w-7 h-7"/></div>
+          <div><p className="text-slate-500 font-bold mb-1">信用分數 (獲讚數)</p><p className="text-3xl font-black text-slate-800">{user.likes}</p></div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
+          <div className="w-14 h-14 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center"><Heart className="w-7 h-7"/></div>
+          <div><p className="text-slate-500 font-bold mb-1">已收藏書籍</p><p className="text-3xl font-black text-slate-800">4</p></div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-5">
+          <div className="w-14 h-14 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center"><BookOpen className="w-7 h-7"/></div>
+          <div><p className="text-slate-500 font-bold mb-1">累積捐出書籍</p><p className="text-3xl font-black text-slate-800">{myBooks.length}</p></div>
+        </div>
+      </div>
+
+      {/* 標籤切換 */}
+      <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit mb-6">
+        <button onClick={() => setActiveTab('manage')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'manage' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>我的捐贈書籍</button>
+        <button onClick={() => setActiveTab('saved')} className={`px-6 py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'saved' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>收藏清單</button>
+      </div>
+
+      {/* 管理表格 (Table View) */}
+      {activeTab === 'manage' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
+                  <th className="p-5 font-bold">封面與書名</th>
+                  <th className="p-5 font-bold">上傳日期</th>
+                  <th className="p-5 font-bold">目前狀態</th>
+                  <th className="p-5 font-bold text-right">快速操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {myBooks.map(book => (
+                  <tr key={book.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="p-5 flex items-center gap-4">
+                      <img src={book.coverUrl} className="w-12 h-16 object-cover rounded border border-slate-100" alt={book.title}/>
+                      <span className="font-bold text-slate-800 text-base">{book.title}</span>
+                    </td>
+                    <td className="p-5 text-slate-500 font-medium">{book.date}</td>
+                    <td className="p-5">
+                      <span className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center w-fit gap-1.5 ${
+                        book.status === 'available' ? 'bg-emerald-100 text-emerald-700' : 
+                        book.status === 'reserved' ? 'bg-amber-100 text-amber-700' : 
+                        book.status === 'paused' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {book.status === 'available' ? <><div className="w-1.5 h-1.5 rounded-full bg-emerald-500"/>待領取</> : 
+                         book.status === 'reserved' ? <><div className="w-1.5 h-1.5 rounded-full bg-amber-500"/>已預約</> : 
+                         book.status === 'paused' ? <><PauseCircle className="w-3 h-3"/>已暫停</> : <><CheckCircle2 className="w-3 h-3"/>已送出</>}
+                      </span>
+                    </td>
+                    <td className="p-5">
+                      {/* 操作按鈕群：桌機版滑鼠移入時顯示，手機版常駐 */}
+                      <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="編輯內容"><Edit className="w-4 h-4"/></button>
+                        {book.status !== 'shipped' && (
+                          <>
+                            <button 
+                              onClick={() => handleStatusToggle(book.id, book.status === 'paused' ? 'available' : 'paused')} 
+                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" 
+                              title={book.status === 'paused' ? '恢復捐贈' : '暫停捐贈'}
+                            >
+                              {book.status === 'paused' ? <BookOpen className="w-4 h-4"/> : <PauseCircle className="w-4 h-4"/>}
+                            </button>
+                            <button 
+                              onClick={() => handleStatusToggle(book.id, 'shipped')} 
+                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                              title="標記為已送出"
+                            >
+                              <Send className="w-4 h-4"/>
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => handleDelete(book.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除紀錄"><Trash2 className="w-4 h-4"/></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 收藏清單 (Saved Books View) */}
+      {activeTab === 'saved' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 取 MOCK_BOOKS 的前四筆來當作已收藏的假資料 */}
+          {MOCK_BOOKS.slice(0, 4).map(book => (
+            <div key={book.id} onClick={() => onBookClick(book)} className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer flex flex-col">
+              <div className="relative w-full h-48 bg-slate-100 overflow-hidden">
+                <img src={book.coverUrl} className="w-full h-full object-cover" alt={book.title} />
+                <div className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-amber-500 shadow-sm"><Heart className="w-4 h-4 fill-current" /></div>
+              </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <h3 className="font-bold text-slate-900 line-clamp-1 mb-1">{book.title}</h3>
+                <span className={`mt-auto w-fit px-2 py-1 text-xs font-bold rounded-md ${book.status === 'available' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+                  {book.status === 'available' ? '此書依然可領取' : '已被他人預約'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // --- 主應用程式入口 (App Routing Logic) ---
 export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedBook, setSelectedBook] = useState(null);
+  const [user, setUser] = useState(null); // 模擬全域登入狀態
 
   const handleBookClick = (book) => { setSelectedBook(book); setCurrentView('detail'); };
   const handleBackToList = () => { setCurrentView('search'); setSelectedBook(null); };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden">
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
+      <Navbar currentView={currentView} setCurrentView={setCurrentView} user={user} />
       
       {currentView === 'home' && <HomeView setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
       {currentView === 'search' && <SearchView onBookClick={handleBookClick} />}
       {currentView === 'detail' && selectedBook && <BookDetailView book={selectedBook} onBack={handleBackToList} />}
-      {currentView === 'auth' && <AuthView setCurrentView={setCurrentView} />}
+      {currentView === 'auth' && <AuthView setCurrentView={setCurrentView} setUser={setUser} />}
+      {currentView === 'dashboard' && user && <DashboardView user={user} setUser={setUser} setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
 
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
