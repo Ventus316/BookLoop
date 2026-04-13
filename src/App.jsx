@@ -2,48 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
 import { 
   Search, Heart, BookOpen, ChevronRight, Share2, Filter, X, 
-  ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock
+  ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle
 } from 'lucide-react';
 
-// --- Mock Data 模擬資料庫 (擴充詳情資料) ---
+// --- Mock Data 模擬資料庫 ---
 const MOCK_BOOKS = [
-  { 
-    id: 1, title: '演算法導論 (第四版)', author: 'Thomas H. Cormen', category: '資工', 
-    donor: '陳同學', donorContact: 's110xxxx45@yzu.edu.tw', status: 'available', 
-    coverUrl: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=600&h=800', 
-    description: '近全新，僅翻閱過幾次，無劃記。適合準備研究所考試。希望這本書能幫助到有心鑽研演算法的學弟妹。',
-    isbn: '9789862803144', publisher: '碁峰資訊', publishDate: '2023/09',
-    likes: 12, saves: 5,
-    history: [
-      { id: 1, date: '2026/04/10 14:30', action: '陳同學 上傳了此書籍' },
-      { id: 2, date: '2026/04/11 09:15', action: '系統審核通過，狀態更新為「待領取」' }
-    ],
-    comments: [
-      { id: 1, user: '大一學弟', date: '2026/04/12', text: '請問這本有缺頁嗎？' },
-      { id: 2, user: '陳同學', isDonor: true, date: '2026/04/13', text: '沒有缺頁喔！保存得很完整。' }
-    ]
-  },
-  { 
-    id: 2, title: '設計的心理學', author: 'Don Norman', category: '設計', 
-    donor: '林同學', donorContact: 's111xxxx23@yzu.edu.tw', status: 'available', 
-    coverUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600&h=800', 
-    description: '封面有輕微折痕，內頁乾淨。UX 設計師必讀經典。',
-    isbn: '9789573274710', publisher: '遠流', publishDate: '2014/11',
-    likes: 8, saves: 24, history: [{ id: 1, date: '2026/04/05', action: '林同學 上傳了此書籍' }], comments: []
-  },
-  { 
-    id: 3, title: 'Clean Code 無瑕的程式碼', author: 'Robert C. Martin', category: '資工', 
-    donor: '張同學', donorContact: 's109xxxx88@yzu.edu.tw', status: 'reserved', 
-    coverUrl: 'https://images.unsplash.com/photo-1555662800-87311b3a51d9?auto=format&fit=crop&q=80&w=600&h=800', 
-    description: '有螢光筆劃記重點，介意者勿領。這本書陪伴我度過軟體工程的專題，希望能傳承下去。',
-    isbn: '9789862017050', publisher: '博碩文化', publishDate: '2013/04',
-    likes: 45, saves: 12,
-    history: [
-      { id: 1, date: '2026/03/20', action: '張同學 上傳了此書籍' },
-      { id: 2, date: '2026/04/12', action: '李學弟 提出了領取請求，狀態更新為「已預約」' }
-    ],
-    comments: []
-  },
+  { id: 1, title: '演算法導論 (第四版)', author: 'Thomas H. Cormen', category: '資工', donor: '陳同學', donorContact: 's110xxxx45@yzu.edu.tw', status: 'available', coverUrl: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=600&h=800', description: '近全新，僅翻閱過幾次，無劃記。適合準備研究所考試。希望這本書能幫助到有心鑽研演算法的學弟妹。', isbn: '9789862803144', publisher: '碁峰資訊', publishDate: '2023/09', likes: 12, saves: 5, history: [{ id: 1, date: '2026/04/10 14:30', action: '陳同學 上傳了此書籍' }, { id: 2, date: '2026/04/11 09:15', action: '系統審核通過，狀態更新為「待領取」' }], comments: [{ id: 1, user: '大一學弟', date: '2026/04/12', text: '請問這本有缺頁嗎？' }, { id: 2, user: '陳同學', isDonor: true, date: '2026/04/13', text: '沒有缺頁喔！保存得很完整。' }] },
+  { id: 2, title: '設計的心理學', author: 'Don Norman', category: '設計', donor: '林同學', donorContact: 's111xxxx23@yzu.edu.tw', status: 'available', coverUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=600&h=800', description: '封面有輕微折痕，內頁乾淨。UX 設計師必讀經典。', isbn: '9789573274710', publisher: '遠流', publishDate: '2014/11', likes: 8, saves: 24, history: [{ id: 1, date: '2026/04/05', action: '林同學 上傳了此書籍' }], comments: [] },
+  { id: 3, title: 'Clean Code 無瑕的程式碼', author: 'Robert C. Martin', category: '資工', donor: '張同學', donorContact: 's109xxxx88@yzu.edu.tw', status: 'reserved', coverUrl: 'https://images.unsplash.com/photo-1555662800-87311b3a51d9?auto=format&fit=crop&q=80&w=600&h=800', description: '有螢光筆劃記重點，介意者勿領。這本書陪伴我度過軟體工程的專題，希望能傳承下去。', isbn: '9789862017050', publisher: '博碩文化', publishDate: '2013/04', likes: 45, saves: 12, history: [{ id: 1, date: '2026/03/20', action: '張同學 上傳了此書籍' }, { id: 2, date: '2026/04/12', action: '李學弟 提出了領取請求，狀態更新為「已預約」' }], comments: [] },
   { id: 4, title: '百年孤寂', author: 'Gabriel García Márquez', category: '文學', donor: '王同學', donorContact: 'wang@yzu.edu.tw', status: 'available', coverUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600&h=800', description: '經典魔幻寫實小說，書況良好。', isbn: '9789863445343', publisher: '皇冠', publishDate: '2018/02', likes: 5, saves: 2, history: [{id: 1, date: '2026/04/13', action: '王同學 上傳了此書籍'}], comments: [] },
   { id: 5, title: '微積分 (下)', author: 'James Stewart', category: '大一必修', donor: '李同學', donorContact: 'lee@yzu.edu.tw', status: 'available', coverUrl: 'https://images.unsplash.com/photo-1509869175650-a1d97972541a?auto=format&fit=crop&q=80&w=600&h=800', description: '期末考救星，有筆記。', isbn: '9789862803151', publisher: '滄海', publishDate: '2022/08', likes: 15, saves: 30, history: [{id: 1, date: '2026/04/13', action: '李同學 上傳'}], comments: [] },
   { id: 6, title: '社會學與台灣社會', author: '王振寰', category: '通識', donor: '吳同學', donorContact: 'wu@yzu.edu.tw', status: 'available', coverUrl: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600&h=800', description: '通識課用書，九成新。', isbn: '9789571181249', publisher: '巨流', publishDate: '2015/09', likes: 3, saves: 1, history: [{id: 1, date: '2026/04/13', action: '吳同學 上傳'}], comments: [] },
@@ -65,20 +31,28 @@ const Navbar = ({ currentView, setCurrentView }) => {
         <span>書活</span>
       </div>
       
-      <div className="hidden md:flex gap-6 text-slate-600 font-medium">
-        <button 
-          onClick={() => setCurrentView('search')} 
-          className={`transition-colors ${currentView === 'search' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}
-        >
-          尋書大廳
-        </button>
-        <button className="hover:text-emerald-600 transition-colors">如何捐贈</button>
-        <button className="hover:text-emerald-600 transition-colors">流向足跡</button>
-      </div>
+      {/* 隱藏於登入頁面的中間導覽 */}
+      {currentView !== 'auth' && (
+        <div className="hidden md:flex gap-6 text-slate-600 font-medium">
+          <button onClick={() => setCurrentView('search')} className={`transition-colors ${currentView === 'search' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>尋書大廳</button>
+          <button className="hover:text-emerald-600 transition-colors">如何捐贈</button>
+          <button className="hover:text-emerald-600 transition-colors">流向足跡</button>
+        </div>
+      )}
 
       <div className="flex gap-3">
-        <button className="hidden sm:block text-emerald-700 font-medium px-4 py-2 hover:bg-emerald-50 rounded-lg transition-colors">登入</button>
-        <button className="bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all">
+        {currentView !== 'auth' && (
+          <button 
+            onClick={() => setCurrentView('auth')}
+            className="hidden sm:block text-emerald-700 font-medium px-4 py-2 hover:bg-emerald-50 rounded-lg transition-colors"
+          >
+            登入
+          </button>
+        )}
+        <button 
+          onClick={() => setCurrentView('auth')}
+          className="bg-emerald-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 transition-all"
+        >
           我要捐書
         </button>
       </div>
@@ -86,49 +60,31 @@ const Navbar = ({ currentView, setCurrentView }) => {
   );
 };
 
-// --- 共用組件：PixiJS 動態插畫 (相容 PixiJS v8) ---
+// --- 共用組件：PixiJS 動態插畫 ---
 const PixiIllustration = () => {
   const pixiContainer = useRef(null);
-
   useEffect(() => {
     if (!pixiContainer.current) return;
     const app = new PIXI.Application();
     let isMounted = true;
-
     const initPixi = async () => {
-      await app.init({
-        width: 500, height: 500, backgroundAlpha: 0, 
-        resolution: window.devicePixelRatio || 1, antialias: true,
-      });
-
-      if (!isMounted) {
-        app.destroy(true, { children: true });
-        return;
-      }
+      await app.init({ width: 500, height: 500, backgroundAlpha: 0, resolution: window.devicePixelRatio || 1, antialias: true });
+      if (!isMounted) { app.destroy(true, { children: true }); return; }
       pixiContainer.current.appendChild(app.canvas);
-
       const books = [];
       const colors = [0x059669, 0xfbbf24, 0x34d399, 0xcbd5e1]; 
-
       for (let i = 0; i < 4; i++) {
         const bookGroup = new PIXI.Container();
         const bookBody = new PIXI.Graphics();
         bookBody.rect(0, 0, 70, 100).fill(colors[i]);
-
         const pages = new PIXI.Graphics();
         pages.rect(8, 5, 20, 90).fill({ color: 0xffffff, alpha: 0.8 });
-
         bookGroup.addChild(bookBody);
         bookGroup.addChild(pages);
         bookGroup.pivot.set(35, 50);
         app.stage.addChild(bookGroup);
-        
-        books.push({
-          sprite: bookGroup, angle: (i * Math.PI) / 2,
-          orbitSpeed: 0.015, rotationSpeed: 0.02
-        });
+        books.push({ sprite: bookGroup, angle: (i * Math.PI) / 2, orbitSpeed: 0.015, rotationSpeed: 0.02 });
       }
-
       app.ticker.add(() => {
         books.forEach((b) => {
           b.angle += b.orbitSpeed;
@@ -138,15 +94,9 @@ const PixiIllustration = () => {
         });
       });
     };
-
     initPixi();
-    return () => {
-      isMounted = false;
-      try { app.destroy(true, { children: true, texture: true, baseTexture: true }); } 
-      catch (e) { console.log("Pixi cleanup:", e); }
-    };
+    return () => { isMounted = false; try { app.destroy(true, { children: true, texture: true, baseTexture: true }); } catch (e) { console.log("Pixi cleanup:", e); } };
   }, []);
-
   return (
     <div className="relative w-full flex justify-center items-center drop-shadow-xl">
       <div className="absolute w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
@@ -159,7 +109,6 @@ const PixiIllustration = () => {
 // --- 視圖 1：首頁 (HomeView) ---
 const HomeView = ({ setCurrentView, onBookClick }) => {
   const [stats, setStats] = useState({ donated: 0, claimed: 0 });
-
   useEffect(() => {
     let currentDonated = 0, currentClaimed = 0;
     const targetDonated = 1254, targetClaimed = 982;
@@ -174,7 +123,6 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
 
   return (
     <div className="animate-in fade-in duration-500">
-      {/* 英雄區 */}
       <main className="max-w-7xl mx-auto px-6 pt-12 pb-20 lg:pt-24 lg:pb-32 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-8 z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 font-medium text-sm">
@@ -189,16 +137,11 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
             打破書櫃的空間限制，將閒置的課本與讀物傳遞給下一位需要的同學。建立透明的捐贈歷程，打造綠色永續的校園閱讀社群。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <button 
-              onClick={() => setCurrentView('search')}
-              className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-700 hover:-translate-y-1 shadow-xl shadow-emerald-200 transition-all duration-300"
-            >
-              <Search className="w-5 h-5" />
-              立即尋書
+            <button onClick={() => setCurrentView('search')} className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-700 hover:-translate-y-1 shadow-xl shadow-emerald-200 transition-all duration-300">
+              <Search className="w-5 h-5" /> 立即尋書
             </button>
-            <button className="flex items-center justify-center gap-2 bg-white text-emerald-700 border-2 border-emerald-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 hover:-translate-y-1 shadow-lg shadow-slate-100 transition-all duration-300">
-              <Share2 className="w-5 h-5" />
-              我要捐贈
+            <button onClick={() => setCurrentView('auth')} className="flex items-center justify-center gap-2 bg-white text-emerald-700 border-2 border-emerald-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-emerald-50 hover:-translate-y-1 shadow-lg shadow-slate-100 transition-all duration-300">
+              <Share2 className="w-5 h-5" /> 我要捐贈
             </button>
           </div>
         </div>
@@ -207,46 +150,33 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
         </div>
       </main>
 
-      {/* 數據儀表板 */}
       <section className="max-w-5xl mx-auto px-6 relative -mt-12 mb-20 z-20">
         <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-8 flex flex-col md:flex-row justify-around items-center gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           <div className="text-center w-full">
             <p className="text-slate-500 font-medium mb-2">目前已累計捐贈書籍</p>
-            <div className="text-5xl font-black text-emerald-600 font-mono tracking-tight">
-              {stats.donated.toLocaleString()} <span className="text-xl text-slate-400 font-sans">本</span>
-            </div>
+            <div className="text-5xl font-black text-emerald-600 font-mono tracking-tight">{stats.donated.toLocaleString()} <span className="text-xl text-slate-400 font-sans">本</span></div>
           </div>
           <div className="text-center w-full pt-8 md:pt-0">
             <p className="text-slate-500 font-medium mb-2">成功傳遞知識次數</p>
-            <div className="text-5xl font-black text-amber-500 font-mono tracking-tight">
-              {stats.claimed.toLocaleString()} <span className="text-xl text-slate-400 font-sans">次</span>
-            </div>
+            <div className="text-5xl font-black text-amber-500 font-mono tracking-tight">{stats.claimed.toLocaleString()} <span className="text-xl text-slate-400 font-sans">次</span></div>
           </div>
         </div>
       </section>
 
-      {/* 最新上架書籍 */}
       <section className="max-w-7xl mx-auto px-6 pb-32">
         <div className="flex justify-between items-end mb-8">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 mb-2">最新待領取書籍</h2>
             <p className="text-slate-500">搶先發現校園內剛上架的二手好書</p>
           </div>
-          <button 
-            onClick={() => setCurrentView('search')}
-            className="hidden sm:flex items-center gap-1 text-emerald-600 font-semibold hover:text-emerald-800 transition-colors"
-          >
+          <button onClick={() => setCurrentView('search')} className="hidden sm:flex items-center gap-1 text-emerald-600 font-semibold hover:text-emerald-800 transition-colors">
             查看全部 <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
         <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {MOCK_BOOKS.map((book) => (
-            <div 
-              key={book.id} 
-              onClick={() => onBookClick(book)}
-              className="min-w-[240px] max-w-[240px] flex-shrink-0 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-emerald-100 hover:-translate-y-2 transition-all duration-300 snap-start group cursor-pointer"
-            >
+            <div key={book.id} onClick={() => onBookClick(book)} className="min-w-[240px] max-w-[240px] flex-shrink-0 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-emerald-100 hover:-translate-y-2 transition-all duration-300 snap-start group cursor-pointer">
               <div className="relative w-full h-64 mb-4 rounded-xl overflow-hidden bg-slate-100">
                 <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 {book.status === 'available' && (
@@ -272,6 +202,7 @@ const HomeView = ({ setCurrentView, onBookClick }) => {
 };
 
 // --- 視圖 2：書籍搜尋大廳 (SearchView) ---
+// (與 v0.2.0 完全相同，保持清爽)
 const SearchView = ({ onBookClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -281,9 +212,7 @@ const SearchView = ({ onBookClick }) => {
 
   const searchSuggestions = useMemo(() => {
     if (!searchTerm.trim()) return [];
-    return MOCK_BOOKS
-      .filter(book => book.title.toLowerCase().includes(searchTerm.toLowerCase()))
-      .map(book => book.title).slice(0, 5);
+    return MOCK_BOOKS.filter(book => book.title.toLowerCase().includes(searchTerm.toLowerCase())).map(book => book.title).slice(0, 5);
   }, [searchTerm]);
 
   const filteredBooks = useMemo(() => {
@@ -299,7 +228,6 @@ const SearchView = ({ onBookClick }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col md:flex-row gap-8 animate-in fade-in duration-500">
-      {/* 行動版過濾按鈕 */}
       <div className="md:hidden flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-slate-900">尋書大廳</h1>
         <button onClick={() => setIsMobileFilterOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-slate-600 font-medium">
@@ -307,14 +235,12 @@ const SearchView = ({ onBookClick }) => {
         </button>
       </div>
 
-      {/* 左側邊欄 */}
       <aside className={`fixed inset-0 z-50 bg-white md:bg-transparent md:static md:block md:w-64 flex-shrink-0 transition-transform duration-300 ease-in-out ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="h-full overflow-y-auto p-6 md:p-0 md:sticky md:top-24">
           <div className="flex justify-between items-center md:hidden mb-6">
             <h2 className="text-xl font-bold text-slate-900">篩選條件</h2>
-            <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
+            <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 text-slate-400"><X className="w-6 h-6" /></button>
           </div>
-
           <div className="mb-8">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">書籍狀態</h3>
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -324,7 +250,6 @@ const SearchView = ({ onBookClick }) => {
               <span className="text-slate-700 font-medium group-hover:text-emerald-700 transition-colors">僅顯示「待領取」</span>
             </label>
           </div>
-
           <div>
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">書籍類別</h3>
             <div className="space-y-3">
@@ -343,22 +268,14 @@ const SearchView = ({ onBookClick }) => {
         </div>
       </aside>
 
-      {/* 主內容區 */}
       <div className="flex-1">
         <h1 className="hidden md:block text-3xl font-bold text-slate-900 mb-6">尋書大廳</h1>
-        
         <div className="relative mb-8 z-40">
           <div className={`relative flex items-center bg-white rounded-2xl border-2 transition-all duration-300 shadow-sm ${isSearchFocused ? 'border-emerald-500 shadow-emerald-100 ring-4 ring-emerald-50' : 'border-slate-200 hover:border-slate-300'}`}>
             <Search className={`w-6 h-6 ml-4 ${isSearchFocused ? 'text-emerald-500' : 'text-slate-400'}`} />
-            <input 
-              type="text" placeholder="搜尋書名、作者..." 
-              className="w-full py-4 px-4 bg-transparent outline-none text-slate-700 text-lg placeholder:text-slate-400 font-medium"
-              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-            />
+            <input type="text" placeholder="搜尋書名、作者..." className="w-full py-4 px-4 bg-transparent outline-none text-slate-700 text-lg placeholder:text-slate-400 font-medium" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onFocus={() => setIsSearchFocused(true)} onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)} />
             {searchTerm && <button onClick={() => setSearchTerm('')} className="p-2 mr-2 text-slate-400"><X className="w-5 h-5" /></button>}
           </div>
-
           {isSearchFocused && searchSuggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-50">
               {searchSuggestions.map((suggestion, index) => (
@@ -377,18 +294,12 @@ const SearchView = ({ onBookClick }) => {
         {filteredBooks.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredBooks.map((book) => (
-              <div 
-                key={book.id} 
-                onClick={() => onBookClick(book)}
-                className="group relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-emerald-900/10 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col h-full"
-              >
+              <div key={book.id} onClick={() => onBookClick(book)} className="group relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-emerald-900/10 hover:-translate-y-2 transition-all duration-300 cursor-pointer flex flex-col h-full">
                 <div className="relative w-full h-64 bg-slate-100 overflow-hidden flex-shrink-0">
                   <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
                     <span className={`w-2.5 h-2.5 rounded-full ${book.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
-                    <span className={`text-xs font-bold ${book.status === 'available' ? 'text-emerald-700' : 'text-amber-700'}`}>
-                      {book.status === 'available' ? '待領取' : '已預約'}
-                    </span>
+                    <span className={`text-xs font-bold ${book.status === 'available' ? 'text-emerald-700' : 'text-amber-700'}`}>{book.status === 'available' ? '待領取' : '已預約'}</span>
                   </div>
                   <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm p-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end">
                     <p className="text-white text-sm leading-relaxed line-clamp-4 font-medium mb-2">{book.description}</p>
@@ -413,7 +324,6 @@ const SearchView = ({ onBookClick }) => {
           <div className="w-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-3xl border border-dashed border-slate-300">
             <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6"><Search className="w-10 h-10 text-slate-400" /></div>
             <h3 className="text-xl font-bold text-slate-800 mb-2">找不到符合的書籍</h3>
-            <p className="text-slate-500 max-w-md">試試看更換搜尋關鍵字，或是放寬左側的篩選條件。</p>
           </div>
         )}
       </div>
@@ -422,6 +332,7 @@ const SearchView = ({ onBookClick }) => {
 };
 
 // --- 視圖 3：書籍詳情頁 (BookDetailView) ---
+// (與 v0.2.0 完全相同)
 const BookDetailView = ({ book, onBack }) => {
   const [showContact, setShowContact] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -430,7 +341,6 @@ const BookDetailView = ({ book, onBack }) => {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    // 當切換不同書籍時，重置視圖並捲動到最上方
     window.scrollTo(0, 0);
     setShowContact(false);
     setComments(book.comments || []);
@@ -438,10 +348,7 @@ const BookDetailView = ({ book, onBack }) => {
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
-    const commentObj = {
-      id: Date.now(), user: '訪客 (目前狀態)', date: new Date().toLocaleDateString(), text: newComment
-    };
-    setComments([...comments, commentObj]);
+    setComments([...comments, { id: Date.now(), user: '訪客', date: new Date().toLocaleDateString(), text: newComment }]);
     setNewComment('');
   };
 
@@ -449,203 +356,307 @@ const BookDetailView = ({ book, onBack }) => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 animate-in slide-in-from-bottom-4 duration-500">
-      
-      {/* 返回按鈕 */}
-      <button 
-        onClick={onBack}
-        className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-medium mb-8 transition-colors"
-      >
+      <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-medium mb-8 transition-colors">
         <ArrowLeft className="w-5 h-5" /> 返回列表
       </button>
 
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/40 border border-slate-100 overflow-hidden flex flex-col lg:flex-row">
-        
-        {/* 左側：大圖展示區 */}
         <div className="w-full lg:w-2/5 bg-slate-100 relative">
-          <img 
-            src={book.coverUrl} 
-            alt={book.title} 
-            className="w-full h-full object-cover max-h-[500px] lg:max-h-none lg:absolute inset-0"
-          />
+          <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover max-h-[500px] lg:max-h-none lg:absolute inset-0" />
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-md">
             <span className={`w-3 h-3 rounded-full ${book.status === 'available' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></span>
-            <span className={`text-sm font-bold ${book.status === 'available' ? 'text-emerald-700' : 'text-amber-700'}`}>
-              {book.status === 'available' ? '開放領取中' : '已被預約'}
-            </span>
+            <span className={`text-sm font-bold ${book.status === 'available' ? 'text-emerald-700' : 'text-amber-700'}`}>{book.status === 'available' ? '開放領取中' : '已被預約'}</span>
           </div>
         </div>
 
-        {/* 右側：詳細資訊與互動區 */}
         <div className="w-full lg:w-3/5 p-8 lg:p-12 flex flex-col">
-          
-          {/* Header 標題區 */}
           <div className="mb-6">
-            <div className="inline-block px-3 py-1 mb-4 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-lg border border-emerald-100">
-              {book.category}
-            </div>
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
-              {book.title}
-            </h1>
+            <div className="inline-block px-3 py-1 mb-4 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-lg border border-emerald-100">{book.category}</div>
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 mb-2 leading-tight">{book.title}</h1>
             <p className="text-lg text-slate-500 font-medium">{book.author}</p>
           </div>
 
-          {/* 規格列表 */}
           <div className="grid grid-cols-2 gap-y-4 gap-x-8 p-6 bg-slate-50 rounded-2xl mb-8">
-            <div>
-              <p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Hash className="w-4 h-4"/> ISBN</p>
-              <p className="font-semibold text-slate-800">{book.isbn || '無資料'}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Building2 className="w-4 h-4"/> 出版社</p>
-              <p className="font-semibold text-slate-800">{book.publisher || '無資料'}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Calendar className="w-4 h-4"/> 出版年月</p>
-              <p className="font-semibold text-slate-800">{book.publishDate || '無資料'}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><BookOpen className="w-4 h-4"/> 書況簡述</p>
-              <p className="font-semibold text-slate-800 line-clamp-1" title={book.description}>{book.description}</p>
-            </div>
+            <div><p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Hash className="w-4 h-4"/> ISBN</p><p className="font-semibold text-slate-800">{book.isbn || '無資料'}</p></div>
+            <div><p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Building2 className="w-4 h-4"/> 出版社</p><p className="font-semibold text-slate-800">{book.publisher || '無資料'}</p></div>
+            <div><p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><Calendar className="w-4 h-4"/> 出版年月</p><p className="font-semibold text-slate-800">{book.publishDate || '無資料'}</p></div>
+            <div><p className="text-sm font-medium text-slate-400 flex items-center gap-1.5 mb-1"><BookOpen className="w-4 h-4"/> 書況簡述</p><p className="font-semibold text-slate-800 line-clamp-1" title={book.description}>{book.description}</p></div>
           </div>
 
-          {/* 互動按鈕列 */}
           <div className="flex gap-4 mb-10 pb-10 border-b border-slate-100">
-            <button 
-              onClick={() => setIsLiked(!isLiked)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 transition-all ${isLiked ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-            >
-              <ThumbsUp className={`w-5 h-5 ${isLiked ? 'fill-emerald-600' : ''}`} /> 
-              點讚 ({book.likes + (isLiked ? 1 : 0)})
+            <button onClick={() => setIsLiked(!isLiked)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 transition-all ${isLiked ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
+              <ThumbsUp className={`w-5 h-5 ${isLiked ? 'fill-emerald-600' : ''}`} /> 點讚 ({book.likes + (isLiked ? 1 : 0)})
             </button>
-            <button 
-              onClick={() => setIsSaved(!isSaved)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 transition-all ${isSaved ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-            >
-              <Heart className={`w-5 h-5 ${isSaved ? 'fill-amber-500' : ''}`} />
-              收藏 ({book.saves + (isSaved ? 1 : 0)})
+            <button onClick={() => setIsSaved(!isSaved)} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold border-2 transition-all ${isSaved ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
+              <Heart className={`w-5 h-5 ${isSaved ? 'fill-amber-500' : ''}`} /> 收藏 ({book.saves + (isSaved ? 1 : 0)})
             </button>
           </div>
 
-          {/* 捐贈者與聯絡 */}
           <div className="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-100">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xl">
-                  {book.donor.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-emerald-600/80">知識傳遞者 (捐贈人)</p>
-                  <p className="text-lg font-bold text-slate-800">{book.donor}</p>
-                </div>
+                <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xl">{book.donor.charAt(0)}</div>
+                <div><p className="text-sm font-medium text-emerald-600/80">知識傳遞者 (捐贈人)</p><p className="text-lg font-bold text-slate-800">{book.donor}</p></div>
               </div>
             </div>
             
             {showContact ? (
               <div className="bg-white p-4 rounded-xl border border-emerald-200 flex items-center gap-3 animate-in fade-in zoom-in duration-200">
-                <Mail className="w-5 h-5 text-emerald-600" />
-                <a href={`mailto:${book.donorContact}`} className="text-emerald-700 font-bold hover:underline">
-                  {book.donorContact}
-                </a>
+                <Mail className="w-5 h-5 text-emerald-600" /><a href={`mailto:${book.donorContact}`} className="text-emerald-700 font-bold hover:underline">{book.donorContact}</a>
               </div>
             ) : (
-              <button 
-                onClick={() => setShowContact(true)}
-                disabled={book.status !== 'available'}
-                className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${book.status === 'available' ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-1 shadow-emerald-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}
-              >
-                <Mail className="w-5 h-5" />
-                {book.status === 'available' ? '我想領取，取得聯絡方式' : '此書目前無法領取'}
+              <button onClick={() => setShowContact(true)} disabled={book.status !== 'available'} className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg transition-all ${book.status === 'available' ? 'bg-emerald-600 text-white hover:bg-emerald-700 hover:-translate-y-1 shadow-emerald-200' : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}`}>
+                <Mail className="w-5 h-5" />{book.status === 'available' ? '我想領取，取得聯絡方式' : '此書目前無法領取'}
               </button>
             )}
           </div>
-          
         </div>
       </div>
 
-      {/* 下方擴展區：流向歷史 & 留言板 */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* 左欄：流向歷史 (Timeline) */}
         <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-slate-100 h-fit">
-          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <Clock className="w-6 h-6 text-emerald-500" /> 知識足跡
-          </h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Clock className="w-6 h-6 text-emerald-500" /> 知識足跡</h3>
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
-            {book.history && book.history.map((event, index) => (
+            {book.history && book.history.map((event) => (
               <div key={event.id} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                 <div className="flex items-center justify-center w-5 h-5 rounded-full border-4 border-white bg-emerald-500 text-slate-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10" />
                 <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-2rem)] p-4 rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="font-bold text-slate-800 text-sm">{event.date.split(' ')[0]}</div>
-                  </div>
+                  <div className="flex items-center justify-between mb-1"><div className="font-bold text-slate-800 text-sm">{event.date.split(' ')[0]}</div></div>
                   <div className="text-slate-600 text-sm leading-snug">{event.action}</div>
                 </div>
               </div>
             ))}
-            {/* 虛擬的未來節點 */}
-            <div className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group is-active opacity-50">
-               <div className="flex items-center justify-center w-5 h-5 rounded-full border-4 border-white bg-slate-300 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10" />
-               <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-2rem)] p-4 rounded-xl border border-dashed border-slate-300">
-                 <div className="text-slate-400 text-sm italic">等待下一位有緣人領取...</div>
-               </div>
-            </div>
           </div>
         </div>
 
-        {/* 右欄：留言板 */}
         <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-emerald-500" /> 書況詢問與留言
-          </h3>
-          
+          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2"><MessageSquare className="w-6 h-6 text-emerald-500" /> 書況詢問與留言</h3>
           <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
             {comments.length > 0 ? comments.map((comment) => (
               <div key={comment.id} className={`flex gap-4 ${comment.isDonor ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${comment.isDonor ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
-                  {comment.user.charAt(0)}
-                </div>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${comment.isDonor ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>{comment.user.charAt(0)}</div>
                 <div className={`flex flex-col ${comment.isDonor ? 'items-end' : 'items-start'}`}>
                   <div className="flex items-baseline gap-2 mb-1">
                     <span className="font-bold text-sm text-slate-700">{comment.user}</span>
                     {comment.isDonor && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">捐贈者</span>}
                     <span className="text-xs text-slate-400">{comment.date}</span>
                   </div>
-                  <div className={`px-4 py-3 rounded-2xl max-w-lg ${comment.isDonor ? 'bg-emerald-600 text-white rounded-tr-sm' : 'bg-slate-100 text-slate-700 rounded-tl-sm'}`}>
-                    {comment.text}
-                  </div>
+                  <div className={`px-4 py-3 rounded-2xl max-w-lg ${comment.isDonor ? 'bg-emerald-600 text-white rounded-tr-sm' : 'bg-slate-100 text-slate-700 rounded-tl-sm'}`}>{comment.text}</div>
                 </div>
               </div>
-            )) : (
-              <p className="text-center text-slate-400 py-8 italic">目前還沒有人留言，來搶頭香吧！</p>
-            )}
+            )) : (<p className="text-center text-slate-400 py-8 italic">目前還沒有人留言，來搶頭香吧！</p>)}
           </div>
-
-          {/* 留言輸入框 */}
           <div className="flex gap-4">
              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500 flex-shrink-0"><User className="w-5 h-5"/></div>
              <div className="flex-1 flex gap-2">
-               <input 
-                 type="text" 
-                 value={newComment}
-                 onChange={(e) => setNewComment(e.target.value)}
-                 onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                 placeholder="詢問書況或面交地點..." 
-                 className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
-               />
-               <button 
-                 onClick={handleAddComment}
-                 disabled={!newComment.trim()}
-                 className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-               >
-                 送出
-               </button>
+               <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()} placeholder="詢問書況或面交地點..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all" />
+               <button onClick={handleAddComment} disabled={!newComment.trim()} className="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">送出</button>
              </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
+
+// --- 視圖 4：登入與註冊頁 (AuthView) ---
+const AuthView = ({ setCurrentView }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({ email: '', password: '', studentId: '', location: '' });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // 切換登入/註冊時清除錯誤與資料
+    setErrors({});
+    setFormData({ email: '', password: '', studentId: '', location: '' });
+  }, [isLogin]);
+
+  // 即時表單驗證邏輯
+  const validateField = (name, value) => {
+    let newErrors = { ...errors };
+
+    switch (name) {
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value) newErrors.email = '請輸入 Email 信箱';
+        else if (!emailRegex.test(value)) newErrors.email = 'Email 格式不正確';
+        else delete newErrors.email;
+        break;
+      case 'password':
+        if (!value) newErrors.password = '請輸入密碼';
+        else if (value.length < 6) newErrors.password = '密碼長度至少需 6 個字元';
+        else delete newErrors.password;
+        break;
+      case 'studentId':
+        if (!isLogin) {
+          // 學號驗證：假設為 7-10 碼英數字
+          const idRegex = /^[a-zA-Z0-9]{7,10}$/;
+          if (!value) newErrors.studentId = '請輸入學號';
+          else if (!idRegex.test(value)) newErrors.studentId = '學號格式不正確 (請輸入7-10碼英數字)';
+          else delete newErrors.studentId;
+        }
+        break;
+      case 'location':
+        if (!isLogin) {
+          if (!value.trim()) newErrors.location = '請填寫主要面交地點';
+          else delete newErrors.location;
+        }
+        break;
+      default:
+        break;
+    }
+    setErrors(newErrors);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // 送出前觸發所有欄位的驗證
+    validateField('email', formData.email);
+    validateField('password', formData.password);
+    if (!isLogin) {
+      validateField('studentId', formData.studentId);
+      validateField('location', formData.location);
+    }
+
+    // 檢查是否有錯誤 (因 state 更新非同步，這裡重新算一次)
+    const currentErrors = {};
+    if (!formData.email) currentErrors.email = '請輸入 Email 信箱';
+    if (!formData.password) currentErrors.password = '請輸入密碼';
+    if (!isLogin && !formData.studentId) currentErrors.studentId = '請輸入學號';
+    if (!isLogin && !formData.location) currentErrors.location = '請填寫主要面交地點';
+
+    if (Object.keys(currentErrors).length === 0 && Object.keys(errors).length === 0) {
+      // 成功驗證，模擬登入/註冊成功並跳轉回首頁
+      alert(isLogin ? '登入成功！歡迎回來。' : '註冊成功！準備開始流動知識。');
+      setCurrentView('home');
+    } else {
+      setErrors(prev => ({...prev, ...currentErrors}));
+    }
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-80px)] flex animate-in fade-in duration-500">
+      
+      {/* 左側：品牌故事大圖 (僅在桌機顯示) */}
+      <div className="hidden lg:flex w-1/2 relative bg-emerald-900 overflow-hidden">
+        <img 
+          src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=1000" 
+          alt="Library" 
+          className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+        />
+        <div className="relative z-10 flex flex-col justify-center px-16 xl:px-24 h-full">
+          <BookOpen className="w-16 h-16 text-emerald-400 mb-8" />
+          <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-6">
+            讓每本書都能<br/>遇見下一個讀者。
+          </h1>
+          <p className="text-lg text-emerald-100/80 leading-relaxed max-w-md">
+            加入書活平台，建立你的專屬知識存摺。只需使用學校 Email 與學號註冊，即可輕鬆捐贈與尋找所需的教材資源。
+          </p>
         </div>
       </div>
 
+      {/* 右側：表單區 */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 xl:p-24 bg-white">
+        <div className="w-full max-w-md">
+          
+          <button onClick={() => setCurrentView('home')} className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 font-medium mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> 返回首頁
+          </button>
+
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">
+            {isLogin ? '歡迎回來' : '建立新帳號'}
+          </h2>
+          <p className="text-slate-500 mb-8">
+            {isLogin ? '請輸入您的帳號密碼以繼續' : '加入書活，與校園社群分享知識'}
+          </p>
+
+          {/* 表單切換 Tabs */}
+          <div className="flex p-1 bg-slate-100 rounded-xl mb-8">
+            <button 
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              登入
+            </button>
+            <button 
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              註冊
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* 註冊專屬欄位：學號 */}
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">學號 <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" name="studentId" value={formData.studentId} onChange={handleChange}
+                  placeholder="例如: s1101234"
+                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.studentId ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
+                />
+                {errors.studentId && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.studentId}</p>}
+              </div>
+            )}
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5">Email 信箱 <span className="text-red-500">*</span></label>
+              <input 
+                type="email" name="email" value={formData.email} onChange={handleChange}
+                placeholder="school@example.edu.tw"
+                className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
+              />
+              {errors.email && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.email}</p>}
+            </div>
+
+            {/* 密碼 */}
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1.5 flex justify-between">
+                <span>密碼 <span className="text-red-500">*</span></span>
+                {isLogin && <a href="#" className="text-emerald-600 font-medium hover:underline">忘記密碼？</a>}
+              </label>
+              <input 
+                type="password" name="password" value={formData.password} onChange={handleChange}
+                placeholder="••••••••"
+                className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
+              />
+              {errors.password && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.password}</p>}
+            </div>
+
+            {/* 註冊專屬欄位：主要面交地點 */}
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">主要面交地點 <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" name="location" value={formData.location} onChange={handleChange}
+                  placeholder="例如: 圖書館大廳、資傳系辦"
+                  className={`w-full px-4 py-3 rounded-xl border bg-slate-50 outline-none transition-all ${errors.location ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'}`}
+                />
+                {errors.location && <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5"/>{errors.location}</p>}
+              </div>
+            )}
+
+            {/* 送出按鈕 */}
+            <button 
+              type="submit"
+              className="w-full bg-emerald-600 text-white font-bold text-lg py-3.5 rounded-xl mt-4 hover:bg-emerald-700 hover:-translate-y-0.5 shadow-lg shadow-emerald-200 transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              {isLogin ? '登入系統' : '註冊帳號'} <ChevronRight className="w-5 h-5" />
+            </button>
+          </form>
+          
+        </div>
+      </div>
     </div>
   );
 };
@@ -656,28 +667,18 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedBook, setSelectedBook] = useState(null);
 
-  // 處理點擊書籍卡片的邏輯
-  const handleBookClick = (book) => {
-    setSelectedBook(book);
-    setCurrentView('detail');
-  };
-
-  // 返回上一頁邏輯
-  const handleBackToList = () => {
-    setCurrentView('search');
-    setSelectedBook(null);
-  };
+  const handleBookClick = (book) => { setSelectedBook(book); setCurrentView('detail'); };
+  const handleBackToList = () => { setCurrentView('search'); setSelectedBook(null); };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden">
       <Navbar currentView={currentView} setCurrentView={setCurrentView} />
       
-      {/* 簡易路由判斷 */}
       {currentView === 'home' && <HomeView setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
       {currentView === 'search' && <SearchView onBookClick={handleBookClick} />}
       {currentView === 'detail' && selectedBook && <BookDetailView book={selectedBook} onBack={handleBackToList} />}
+      {currentView === 'auth' && <AuthView setCurrentView={setCurrentView} />}
 
-      {/* 全局自定義 CSS */}
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
