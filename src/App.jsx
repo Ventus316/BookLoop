@@ -3,7 +3,7 @@ import * as PIXI from 'pixi.js';
 import { 
   Search, Heart, BookOpen, ChevronRight, Share2, Filter, X, 
   ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle,
-  LogOut, Edit, Trash2, PauseCircle, Send, UploadCloud, Loader2
+  LogOut, Edit, Trash2, PauseCircle, Send, UploadCloud, Loader2, BookPlus, Settings, HelpCircle
 } from 'lucide-react';
 
 // --- Mock Data 模擬資料庫 ---
@@ -36,7 +36,7 @@ const Navbar = ({ currentView, setCurrentView, user }) => {
       {currentView !== 'auth' && (
         <div className="hidden md:flex gap-6 text-slate-600 font-medium">
           <button onClick={() => setCurrentView('search')} className={`transition-colors ${currentView === 'search' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>尋書大廳</button>
-          <button className="hover:text-emerald-600 transition-colors">如何捐贈</button>
+          <button onClick={() => setCurrentView('how-to')} className={`transition-colors ${currentView === 'how-to' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>如何捐贈</button>
           <button className="hover:text-emerald-600 transition-colors">流向足跡</button>
         </div>
       )}
@@ -728,135 +728,70 @@ const DonateView = ({ setCurrentView }) => {
   const [imagePreview, setImagePreview] = useState(null);
   
   const [formData, setFormData] = useState({
-    title: '',
-    author: '',
-    category: CATEGORIES[0],
-    description: ''
+    title: '', author: '', category: CATEGORIES[0], description: ''
   });
 
-  // 串接 Google Books API 自動填寫
   const handleIsbnFetch = async () => {
     if (!isbn.trim()) return alert('請先輸入 ISBN 碼');
-    
     setIsFetching(true);
     try {
       const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
       const data = await response.json();
-      
       if (data.items && data.items.length > 0) {
         const bookInfo = data.items[0].volumeInfo;
         setFormData(prev => ({
-          ...prev,
-          title: bookInfo.title || '',
-          author: bookInfo.authors ? bookInfo.authors.join(', ') : '',
+          ...prev, title: bookInfo.title || '', author: bookInfo.authors ? bookInfo.authors.join(', ') : '',
         }));
-        
-        // 若有封面且使用者尚未上傳圖片，則預設帶入 API 提供的封面
         if (!imagePreview && bookInfo.imageLinks?.thumbnail) {
-          // Google Books API 通常回傳 http，需確保轉換成 https 以免 mixed content 警告
           setImagePreview(bookInfo.imageLinks.thumbnail.replace('http:', 'https:'));
         }
-      } else {
-        alert('找不到此 ISBN 的相關書籍資訊，請手動填寫。');
-      }
+      } else { alert('找不到此 ISBN 的相關書籍資訊，請手動填寫。'); }
     } catch (error) {
       console.error("API Fetch Error:", error);
       alert('自動抓取失敗，請確認網路狀態或手動填寫。');
-    } finally {
-      setIsFetching(false);
-    }
+    } finally { setIsFetching(false); }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
 
-  // 拖曳上傳相關邏輯
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
-    }
-  };
+  const handleDrag = (e) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") { setDragActive(true); } else if (e.type === "dragleave") { setDragActive(false); } };
+  const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) { handleFile(e.dataTransfer.files[0]); } };
+  const handleFileChange = (e) => { if (e.target.files && e.target.files[0]) { handleFile(e.target.files[0]); } };
 
   const handleFile = (file) => {
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target.result);
-      reader.readAsDataURL(file);
-    } else {
-      alert('請上傳圖片格式的檔案 (如 JPG, PNG)');
-    }
+      const reader = new FileReader(); reader.onload = (e) => setImagePreview(e.target.result); reader.readAsDataURL(file);
+    } else { alert('請上傳圖片格式的檔案 (如 JPG, PNG)'); }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title) return alert('請填寫書名');
     if (!imagePreview) return alert('請上傳書籍照片');
-    
-    // 模擬成功送出
     alert('書籍上架成功！感謝您的分享！');
     setCurrentView('dashboard');
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 animate-in fade-in duration-500">
-      <button 
-        onClick={() => setCurrentView('dashboard')}
-        className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-medium mb-6 transition-colors"
-      >
+      <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-medium mb-6 transition-colors">
         <ArrowLeft className="w-5 h-5" /> 返回管理後台
       </button>
 
       <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        
-        {/* 標題區塊 */}
         <div className="bg-emerald-600 px-8 py-10 text-white">
           <h1 className="text-3xl font-extrabold mb-2">我要捐書</h1>
           <p className="text-emerald-100 text-lg">分享您的閒置書籍，讓知識流向需要的人。</p>
         </div>
 
-        {/* 表單內容區塊 */}
         <div className="p-8 lg:p-12">
-          
-          {/* ISBN 自動抓取特色功能 */}
           <div className="mb-10 p-6 bg-slate-50 border border-slate-200 rounded-2xl">
             <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-              <Search className="w-4 h-4 text-emerald-600" /> 
-              ISBN 自動抓取 (推薦)
+              <Search className="w-4 h-4 text-emerald-600" /> ISBN 自動抓取 (推薦)
             </label>
             <div className="flex gap-3">
-              <input 
-                type="text" 
-                value={isbn}
-                onChange={(e) => setIsbn(e.target.value)}
-                placeholder="請輸入書籍背面的 ISBN 13 碼" 
-                className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all"
-              />
-              <button 
-                onClick={handleIsbnFetch}
-                disabled={isFetching || !isbn}
-                className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
-              >
+              <input type="text" value={isbn} onChange={(e) => setIsbn(e.target.value)} placeholder="請輸入書籍背面的 ISBN 13 碼" className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all" />
+              <button onClick={handleIsbnFetch} disabled={isFetching || !isbn} className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]">
                 {isFetching ? <Loader2 className="w-5 h-5 animate-spin" /> : '自動填入'}
               </button>
             </div>
@@ -864,72 +799,36 @@ const DonateView = ({ setCurrentView }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* 書名與作者 */}
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">書名 <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" name="title" value={formData.title} onChange={handleChange} required
-                    placeholder="請輸入完整書名"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
-                  />
+                  <input type="text" name="title" value={formData.title} onChange={handleChange} required placeholder="請輸入完整書名" className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">作者</label>
-                  <input 
-                    type="text" name="author" value={formData.author} onChange={handleChange}
-                    placeholder="請輸入作者姓名"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white"
-                  />
+                  <input type="text" name="author" value={formData.author} onChange={handleChange} placeholder="請輸入作者姓名" className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">書籍類別 <span className="text-red-500">*</span></label>
-                  <select 
-                    name="category" value={formData.category} onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium text-slate-700 cursor-pointer appearance-none"
-                    style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white font-medium text-slate-700 cursor-pointer appearance-none" style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}>
+                    {CATEGORIES.map(cat => ( <option key={cat} value={cat}>{cat}</option> ))}
                   </select>
                 </div>
               </div>
 
-              {/* 圖片上傳區塊 (Drag & Drop) */}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">書籍實體照片 <span className="text-red-500">*</span></label>
-                <div 
-                  className={`relative w-full h-full min-h-[220px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-6 text-center transition-all cursor-pointer overflow-hidden
-                    ${dragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 hover:border-emerald-400 bg-slate-50'}
-                  `}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleFileChange} 
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
-                  />
-                  
+                <div className={`relative w-full h-full min-h-[220px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-6 text-center transition-all cursor-pointer overflow-hidden ${dragActive ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300 hover:border-emerald-400 bg-slate-50'}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}>
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" />
                   {imagePreview ? (
                     <img src={imagePreview} alt="Preview" className="absolute inset-0 w-full h-full object-contain p-2 z-10 bg-slate-50" />
                   ) : (
                     <div className="z-10 pointer-events-none">
-                      <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 text-emerald-600">
-                        <UploadCloud className="w-8 h-8" />
-                      </div>
-                      <p className="text-slate-700 font-bold text-lg mb-1">點擊或拖曳圖片至此</p>
-                      <p className="text-slate-500 text-sm">支援 JPG, PNG 格式 (最大 5MB)</p>
+                      <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-4 text-emerald-600"><UploadCloud className="w-8 h-8" /></div>
+                      <p className="text-slate-700 font-bold text-lg mb-1">點擊或拖曳圖片至此</p><p className="text-slate-500 text-sm">支援 JPG, PNG 格式 (最大 5MB)</p>
                     </div>
                   )}
-                  
-                  {/* Hover 提示更換圖片 */}
                   {imagePreview && (
                     <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity z-20 flex items-center justify-center pointer-events-none">
                       <p className="text-white font-bold flex items-center gap-2"><UploadCloud className="w-5 h-5"/> 點擊更換圖片</p>
@@ -939,41 +838,149 @@ const DonateView = ({ setCurrentView }) => {
               </div>
             </div>
 
-            {/* 書況補充文本框 */}
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between">
-                <span>書況補充描述</span>
-                <span className="text-slate-400 font-normal">選填</span>
-              </label>
-              <textarea 
-                name="description" value={formData.description} onChange={handleChange}
-                placeholder="例如：內頁有少許螢光筆劃記，九成新。方便約在圖書館面交..."
-                rows={4}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white resize-y"
-              />
+              <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between"><span>書況補充描述</span><span className="text-slate-400 font-normal">選填</span></label>
+              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="例如：內頁有少許螢光筆劃記，九成新。方便約在圖書館面交..." rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all bg-white resize-y" />
             </div>
 
-            {/* 提交按鈕 */}
             <div className="pt-6 border-t border-slate-100 flex justify-end gap-4">
-              <button 
-                type="button" 
-                onClick={() => setCurrentView('dashboard')}
-                className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                取消
-              </button>
-              <button 
-                type="submit" 
-                className="px-10 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5"
-              >
-                確認送出，發布捐贈
-              </button>
+              <button type="button" onClick={() => setCurrentView('dashboard')} className="px-8 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors">取消</button>
+              <button type="submit" className="px-10 py-3 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all hover:-translate-y-0.5">確認送出，發布捐贈</button>
             </div>
-
           </form>
-
         </div>
       </div>
+    </div>
+  );
+};
+
+
+// --- 視圖 7：如何捐贈教學頁 (HowToDonateView) ---
+const HowToDonateView = ({ setCurrentView, user }) => {
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="text-center mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium text-sm mb-4">
+          <BookPlus className="w-4 h-4" /> 輕鬆三步，讓知識延續
+        </div>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">如何發布與管理捐贈？</h1>
+        <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+          在書活平台，我們盡可能簡化了書籍上架的流程，並提供了完善的後台系統，讓你隨時掌握每一本捐出書籍的流向狀態。
+        </p>
+      </div>
+
+      {/* 區塊一：發布捐贈過程 */}
+      <section className="mb-20">
+        <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-2">
+          <BookPlus className="w-6 h-6 text-emerald-600" /> 我要捐書的發布過程
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+          {/* 連接線 (僅在 md 螢幕以上顯示) */}
+          <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-emerald-100 z-0"></div>
+
+          {/* 步驟 1 */}
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">1</div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">使用 ISBN 自動抓取</h3>
+            <p className="text-slate-500">
+              點擊右上角「我要捐書」。只需輸入書本背面的 13 碼 ISBN，系統會自動串接 Google Books 帶入精確的書名與作者，省去打字時間。
+            </p>
+          </div>
+
+          {/* 步驟 2 */}
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">2</div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">上傳照片與書況</h3>
+            <p className="text-slate-500">
+              將拍攝好的書籍實體照片拖曳至上傳區，並選擇適合的「書籍類別」。若有筆記或破損，建議在下方的文本框中如實備註。
+            </p>
+          </div>
+
+          {/* 步驟 3 */}
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">3</div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">確認發布上架</h3>
+            <p className="text-slate-500">
+              按下確認送出後，書籍就會立刻出現在「尋書大廳」中。如果有同學需要，他們便能透過詳情頁取得你的聯絡方式。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 區塊二：後台管理教學 */}
+      <section>
+        <div className="bg-slate-800 rounded-3xl overflow-hidden shadow-xl">
+          <div className="p-8 md:p-12 text-white border-b border-slate-700">
+            <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-4">
+              <Settings className="w-8 h-8 text-emerald-400" /> 已發布書籍的管理與下架
+            </h2>
+            <p className="text-slate-300 text-lg">
+              所有發布的書籍，都可以在登入後的「個人管理後台」中找到。在表格右側的「快速操作」欄位，你可以隨時變更書籍狀態。
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-700">
+            
+            {/* 操作：修改 */}
+            <div className="p-8 hover:bg-slate-700/50 transition-colors">
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-emerald-400 mb-5">
+                <Edit className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">修改書籍內容</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                發現打錯字或是想補充更詳細的書況描述？點擊編輯按鈕即可重新進入表單修改資料，不影響已有的按讚與收藏。
+              </p>
+            </div>
+
+            {/* 操作：暫停/下架 */}
+            <div className="p-8 hover:bg-slate-700/50 transition-colors">
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-amber-400 mb-5">
+                <PauseCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">暫停捐贈 (下架)</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                如果這本書你暫時還需要使用，或是已經和某位同學口頭約好面交，可以先點擊暫停。書籍將從大廳隱藏，日後可隨時恢復上架。
+              </p>
+            </div>
+
+            {/* 操作：標記送出 */}
+            <div className="p-8 hover:bg-slate-700/50 transition-colors">
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-blue-400 mb-5">
+                <Send className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">標記為已送出</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                面交完成後，請務必點擊此按鈕！系統會將書籍標示為「已送出」並寫入歷史足跡，同時也會為你的信用分數 +1。
+              </p>
+            </div>
+
+            {/* 操作：刪除 */}
+            <div className="p-8 hover:bg-slate-700/50 transition-colors">
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-red-400 mb-5">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">永久刪除紀錄</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                如果書籍不慎遺失或損壞，再也無法捐出，可點擊垃圾桶按鈕。這會將書籍資料從資料庫中徹底移除。
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Bottom */}
+      <div className="mt-16 text-center">
+        <button 
+          onClick={() => setCurrentView(user ? 'donate' : 'auth')}
+          className="bg-emerald-600 text-white font-bold px-10 py-4 rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 hover:-translate-y-1 transition-all"
+        >
+          {user ? '我了解了，立即前往捐書' : '登入/註冊以開始捐書'}
+        </button>
+      </div>
+
     </div>
   );
 };
@@ -998,6 +1005,7 @@ export default function App() {
       {currentView === 'auth' && <AuthView setCurrentView={setCurrentView} setUser={setUser} />}
       {currentView === 'dashboard' && user && <DashboardView user={user} setUser={setUser} setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
       {currentView === 'donate' && <DonateView setCurrentView={setCurrentView} />}
+      {currentView === 'how-to' && <HowToDonateView setCurrentView={setCurrentView} user={user} />}
 
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
