@@ -3,7 +3,8 @@ import * as PIXI from 'pixi.js';
 import { 
   Search, Heart, BookOpen, ChevronRight, Share2, Filter, X, 
   ArrowLeft, ThumbsUp, MessageSquare, Mail, Calendar, Hash, User, Building2, Clock, CheckCircle2, AlertCircle,
-  LogOut, Edit, Trash2, PauseCircle, Send, UploadCloud, Loader2, BookPlus, Settings, HelpCircle
+  LogOut, Edit, Trash2, PauseCircle, Send, UploadCloud, Loader2, BookPlus, Settings, HelpCircle,
+  Activity, MapPin, Users, Repeat
 } from 'lucide-react';
 
 // --- Mock Data 模擬資料庫 ---
@@ -32,12 +33,11 @@ const Navbar = ({ currentView, setCurrentView, user }) => {
         <span>書活</span>
       </div>
       
-      {/* 隱藏於登入頁面的中間導覽 */}
       {currentView !== 'auth' && (
         <div className="hidden md:flex gap-6 text-slate-600 font-medium">
           <button onClick={() => setCurrentView('search')} className={`transition-colors ${currentView === 'search' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>尋書大廳</button>
           <button onClick={() => setCurrentView('how-to')} className={`transition-colors ${currentView === 'how-to' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>如何捐贈</button>
-          <button className="hover:text-emerald-600 transition-colors">流向足跡</button>
+          <button onClick={() => setCurrentView('timeline')} className={`transition-colors ${currentView === 'timeline' ? 'text-emerald-600 font-bold' : 'hover:text-emerald-600'}`}>流向足跡</button>
         </div>
       )}
 
@@ -472,7 +472,6 @@ const BookDetailView = ({ book, onBack }) => {
   );
 };
 
-
 // --- 視圖 4：登入與註冊頁 (AuthView) ---
 const AuthView = ({ setCurrentView, setUser }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -859,7 +858,6 @@ const DonateView = ({ setCurrentView }) => {
 const HowToDonateView = ({ setCurrentView, user }) => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 animate-in fade-in duration-500">
-      {/* Header */}
       <div className="text-center mb-16">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium text-sm mb-4">
           <BookPlus className="w-4 h-4" /> 輕鬆三步，讓知識延續
@@ -870,108 +868,68 @@ const HowToDonateView = ({ setCurrentView, user }) => {
         </p>
       </div>
 
-      {/* 區塊一：發布捐贈過程 */}
       <section className="mb-20">
         <h2 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-2">
           <BookPlus className="w-6 h-6 text-emerald-600" /> 我要捐書的發布過程
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-          {/* 連接線 (僅在 md 螢幕以上顯示) */}
           <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-emerald-100 z-0"></div>
 
-          {/* 步驟 1 */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">1</div>
             <h3 className="text-xl font-bold text-slate-800 mb-3">使用 ISBN 自動抓取</h3>
-            <p className="text-slate-500">
-              點擊右上角「我要捐書」。只需輸入書本背面的 13 碼 ISBN，系統會自動串接 Google Books 帶入精確的書名與作者，省去打字時間。
-            </p>
+            <p className="text-slate-500">點擊右上角「我要捐書」。只需輸入書本背面的 13 碼 ISBN，系統會自動串接 Google Books 帶入精確的書名與作者，省去打字時間。</p>
           </div>
 
-          {/* 步驟 2 */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">2</div>
             <h3 className="text-xl font-bold text-slate-800 mb-3">上傳照片與書況</h3>
-            <p className="text-slate-500">
-              將拍攝好的書籍實體照片拖曳至上傳區，並選擇適合的「書籍類別」。若有筆記或破損，建議在下方的文本框中如實備註。
-            </p>
+            <p className="text-slate-500">將拍攝好的書籍實體照片拖曳至上傳區，並選擇適合的「書籍類別」。若有筆記或破損，建議在下方的文本框中如實備註。</p>
           </div>
 
-          {/* 步驟 3 */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative z-10 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mb-6 shadow-lg shadow-emerald-200">3</div>
             <h3 className="text-xl font-bold text-slate-800 mb-3">確認發布上架</h3>
-            <p className="text-slate-500">
-              按下確認送出後，書籍就會立刻出現在「尋書大廳」中。如果有同學需要，他們便能透過詳情頁取得你的聯絡方式。
-            </p>
+            <p className="text-slate-500">按下確認送出後，書籍就會立刻出現在「尋書大廳」中。如果有同學需要，他們便能透過詳情頁取得你的聯絡方式。</p>
           </div>
         </div>
       </section>
 
-      {/* 區塊二：後台管理教學 */}
       <section>
         <div className="bg-slate-800 rounded-3xl overflow-hidden shadow-xl">
           <div className="p-8 md:p-12 text-white border-b border-slate-700">
             <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-4">
               <Settings className="w-8 h-8 text-emerald-400" /> 已發布書籍的管理與下架
             </h2>
-            <p className="text-slate-300 text-lg">
-              所有發布的書籍，都可以在登入後的「個人管理後台」中找到。在表格右側的「快速操作」欄位，你可以隨時變更書籍狀態。
-            </p>
+            <p className="text-slate-300 text-lg">所有發布的書籍，都可以在登入後的「個人管理後台」中找到。在表格右側的「快速操作」欄位，你可以隨時變更書籍狀態。</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-700">
-            
-            {/* 操作：修改 */}
             <div className="p-8 hover:bg-slate-700/50 transition-colors">
-              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-emerald-400 mb-5">
-                <Edit className="w-6 h-6" />
-              </div>
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-emerald-400 mb-5"><Edit className="w-6 h-6" /></div>
               <h3 className="text-xl font-bold text-white mb-2">修改書籍內容</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                發現打錯字或是想補充更詳細的書況描述？點擊編輯按鈕即可重新進入表單修改資料，不影響已有的按讚與收藏。
-              </p>
+              <p className="text-slate-400 text-sm leading-relaxed">發現打錯字或是想補充更詳細的書況描述？點擊編輯按鈕即可重新進入表單修改資料，不影響已有的按讚與收藏。</p>
             </div>
-
-            {/* 操作：暫停/下架 */}
             <div className="p-8 hover:bg-slate-700/50 transition-colors">
-              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-amber-400 mb-5">
-                <PauseCircle className="w-6 h-6" />
-              </div>
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-amber-400 mb-5"><PauseCircle className="w-6 h-6" /></div>
               <h3 className="text-xl font-bold text-white mb-2">暫停捐贈 (下架)</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                如果這本書你暫時還需要使用，或是已經和某位同學口頭約好面交，可以先點擊暫停。書籍將從大廳隱藏，日後可隨時恢復上架。
-              </p>
+              <p className="text-slate-400 text-sm leading-relaxed">如果這本書你暫時還需要使用，或是已經和某位同學口頭約好面交，可以先點擊暫停。書籍將從大廳隱藏，日後可隨時恢復上架。</p>
             </div>
-
-            {/* 操作：標記送出 */}
             <div className="p-8 hover:bg-slate-700/50 transition-colors">
-              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-blue-400 mb-5">
-                <Send className="w-6 h-6" />
-              </div>
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-blue-400 mb-5"><Send className="w-6 h-6" /></div>
               <h3 className="text-xl font-bold text-white mb-2">標記為已送出</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                面交完成後，請務必點擊此按鈕！系統會將書籍標示為「已送出」並寫入歷史足跡，同時也會為你的信用分數 +1。
-              </p>
+              <p className="text-slate-400 text-sm leading-relaxed">面交完成後，請務必點擊此按鈕！系統會將書籍標示為「已送出」並寫入歷史足跡，同時也會為你的信用分數 +1。</p>
             </div>
-
-            {/* 操作：刪除 */}
             <div className="p-8 hover:bg-slate-700/50 transition-colors">
-              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-red-400 mb-5">
-                <Trash2 className="w-6 h-6" />
-              </div>
+              <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-red-400 mb-5"><Trash2 className="w-6 h-6" /></div>
               <h3 className="text-xl font-bold text-white mb-2">永久刪除紀錄</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                如果書籍不慎遺失或損壞，再也無法捐出，可點擊垃圾桶按鈕。這會將書籍資料從資料庫中徹底移除。
-              </p>
+              <p className="text-slate-400 text-sm leading-relaxed">如果書籍不慎遺失或損壞，再也無法捐出，可點擊垃圾桶按鈕。這會將書籍資料從資料庫中徹底移除。</p>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* CTA Bottom */}
       <div className="mt-16 text-center">
         <button 
           onClick={() => setCurrentView(user ? 'donate' : 'auth')}
@@ -981,6 +939,143 @@ const HowToDonateView = ({ setCurrentView, user }) => {
         </button>
       </div>
 
+    </div>
+  );
+};
+
+
+// --- 視圖 8：流向足跡頁 (TimelineView) ---
+const TimelineView = ({ setCurrentView, onBookClick }) => {
+  // 模擬：全站最新動態
+  const recentActivities = [
+    { id: 1, type: 'claim', user: '資傳二 曾同學', action: '成功領取了', item: '《UI/UX 設計理論與實務》', time: '10 分鐘前', icon: <CheckCircle2 className="w-4 h-4 text-white" />, color: 'bg-blue-500' },
+    { id: 2, type: 'donate', user: '資工四 陳同學', action: '發布了全新捐贈', item: '《Python 網路爬蟲實戰》', time: '35 分鐘前', icon: <Share2 className="w-4 h-4 text-white" />, color: 'bg-emerald-500' },
+    { id: 3, type: 'reserve', user: '設計一 林同學', action: '預約了', item: '《色彩學原理》', time: '2 小時前', icon: <Clock className="w-4 h-4 text-white" />, color: 'bg-amber-500' },
+    { id: 4, type: 'donate', user: '通識中心 吳教授', action: '發布了全新捐贈', item: '《台灣歷史與文化》', time: '5 小時前', icon: <Share2 className="w-4 h-4 text-white" />, color: 'bg-emerald-500' },
+    { id: 5, type: 'claim', user: '企管三 張同學', action: '成功領取了', item: '《行銷管理》', time: '昨天', icon: <CheckCircle2 className="w-4 h-4 text-white" />, color: 'bg-blue-500' },
+  ];
+
+  // 模擬：傳承多次的精選旅程
+  const featuredJourneys = [
+    {
+      id: 101, title: '微積分 (上) 絕對及格筆記版', coverUrl: 'https://images.unsplash.com/photo-1509869175650-a1d97972541a?auto=format&fit=crop&q=80&w=300',
+      route: ['108級 葉同學', '110級 蔡同學', '111級 黃同學', '目前待領取中...'],
+      impact: '已幫助 3 位同學過關'
+    },
+    {
+      id: 102, title: 'Clean Code 無瑕的程式碼', coverUrl: 'https://images.unsplash.com/photo-1555662800-87311b3a51d9?auto=format&fit=crop&q=80&w=300',
+      route: ['109級 張同學', '112級 李學弟'],
+      impact: '知識剛開始流傳'
+    }
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 animate-in fade-in duration-500">
+      
+      {/* 頁面標題 */}
+      <div className="text-center mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium text-sm mb-4">
+          <Activity className="w-4 h-4" /> 校園知識流動儀表板
+        </div>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">書籍的奇幻旅程</h1>
+        <p className="text-lg text-slate-500 max-w-2xl mx-auto">
+          每一本書都有它的使命。在這裡，我們記錄下每一本二手書在校園內傳遞的足跡，見證知識如何點亮不同的角落。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        
+        {/* 左欄：精選傳承旅程 */}
+        <div className="lg:col-span-2 space-y-8">
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 mb-6">
+            <MapPin className="w-6 h-6 text-emerald-600" /> 精選傳承旅程
+          </h2>
+          
+          {featuredJourneys.map(journey => (
+            <div key={journey.id} className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-8 items-center md:items-start group hover:shadow-xl hover:border-emerald-100 transition-all">
+              <div className="w-32 flex-shrink-0">
+                <img src={journey.coverUrl} alt={journey.title} className="w-full rounded-lg shadow-md group-hover:-translate-y-2 transition-transform duration-300" />
+              </div>
+              <div className="flex-1 w-full">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-slate-900">{journey.title}</h3>
+                  <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded-md flex items-center gap-1">
+                    <Repeat className="w-3 h-3" /> {journey.impact}
+                  </span>
+                </div>
+                
+                {/* 水平路線圖 (Horizontal Timeline) */}
+                <div className="relative pt-8 pb-4">
+                  {/* 連接水平線 */}
+                  <div className="absolute top-[42px] left-10 right-10 h-1 bg-emerald-100 -z-10"></div>
+                  
+                  <div className="flex justify-between w-full relative z-10">
+                    {journey.route.map((person, idx) => (
+                      <div key={idx} className="flex flex-col items-center relative w-24">
+                        <div className={`w-5 h-5 rounded-full border-4 border-white shadow-sm flex items-center justify-center mb-3 z-10
+                          ${idx === journey.route.length - 1 && person.includes('待領取') ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}
+                        `} />
+                        <div className="text-xs md:text-sm font-bold text-slate-600 text-center leading-tight">
+                          {person}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-50 flex justify-end">
+                  <button 
+                    onClick={() => setCurrentView('search')}
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+                  >
+                    去大廳尋找這本書 <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 右欄：全站即時動態 */}
+        <div className="lg:col-span-1">
+          <div className="bg-slate-800 rounded-3xl p-8 shadow-xl sticky top-24">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-8">
+              <Activity className="w-5 h-5 text-emerald-400" /> 即時校園動態
+            </h2>
+            
+            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-700">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                  
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full border-4 border-slate-800 ${activity.color} shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10`}>
+                    {activity.icon}
+                  </div>
+                  
+                  <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2rem)] p-4 rounded-xl bg-slate-700/50 border border-slate-600 hover:bg-slate-700 transition-colors">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-emerald-400 text-xs">{activity.user}</span>
+                      <span className="text-slate-400 text-[10px]">{activity.time}</span>
+                    </div>
+                    <p className="text-sm text-slate-300 leading-snug mt-1">
+                      {activity.action} <br/>
+                      <span className="text-white font-bold">{activity.item}</span>
+                    </p>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setCurrentView('search')}
+              className="w-full mt-10 bg-emerald-600/20 text-emerald-400 font-bold py-3 rounded-xl border border-emerald-500/30 hover:bg-emerald-600/40 transition-colors"
+            >
+              前往大廳參與傳承
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 };
@@ -1006,6 +1101,7 @@ export default function App() {
       {currentView === 'dashboard' && user && <DashboardView user={user} setUser={setUser} setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
       {currentView === 'donate' && <DonateView setCurrentView={setCurrentView} />}
       {currentView === 'how-to' && <HowToDonateView setCurrentView={setCurrentView} user={user} />}
+      {currentView === 'timeline' && <TimelineView setCurrentView={setCurrentView} onBookClick={handleBookClick} />}
 
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
