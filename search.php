@@ -119,23 +119,6 @@
     </main>
 
     <?php include 'components/footer.php'; ?>
-
-    <script>
-        $(document).ready(function() {
-            // 監聽關鍵字輸入框事件
-            $('#search-input').on('keyup', function() {
-                let value = $(this).val().toLowerCase();
-                // 這裡預留第四階段的 AJAX 或前端篩選邏輯
-                console.log("正在搜尋關鍵字: " + value);
-            });
-
-            // 監聽側邊欄核取方塊變更
-            $('input[type="checkbox"]').change(function() {
-                // 這裡預留第四階段動態發送篩選請求的程式碼
-                console.log("篩選條件已變更");
-            });
-        });
-    </script>
 </body>
 
 </html>

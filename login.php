@@ -97,19 +97,7 @@
         </div>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            $('#loginForm').submit(function(e) {
-                let email = $('input[name="uemail"]').val().trim();
-                let password = $('input[name="upassword"]').val().trim();
-
-                if (email === '' || password === '') {
-                    e.preventDefault();
-                    alert('請完整填寫信箱與密碼！');
-                }
-            });
-        });
-    </script>
+    <script src="assets/script.js"></script>
 </body>
 
 </html>

@@ -102,18 +102,7 @@
         </div>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            $('#registerForm').submit(function(e) {
-                let password = $('input[name="upassword"]').val();
-
-                if (password.length < 6) {
-                    e.preventDefault();
-                    alert('為了安全起見，密碼長度不可少於 6 位數！');
-                }
-            });
-        });
-    </script>
+    <script src="assets/script.js"></script>
 </body>
 
 </html>

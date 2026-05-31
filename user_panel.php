@@ -177,41 +177,6 @@ $my_received_books = [
     </main>
 
     <?php include 'components/footer.php'; ?>
-
-    <script>
-        $(document).ready(function() {
-
-            // 1. 頁籤切換互動邏輯
-            $('.panel-tab').click(function() {
-                // 移除所有頁籤的選取樣式，並賦予未選取樣式
-                $('.panel-tab').removeClass('border-brand text-brand font-bold').addClass('border-transparent text-gray-400 font-medium');
-                // 為當前點擊頁籤加上選取樣式
-                $(this).removeClass('border-transparent text-gray-400 font-medium').addClass('border-brand text-brand font-bold');
-
-                // 隱藏所有表格內容
-                $('.panel-content').addClass('hidden');
-
-                // 依據點擊的頁籤 ID 顯示對應的表格內容
-                let tabId = $(this).attr('id');
-                if (tabId === 'tab-donated') $('#content-donated').removeClass('hidden');
-                if (tabId === 'tab-collected') $('#content-collected').removeClass('hidden');
-                if (tabId === 'tab-received') $('#content-received').removeClass('hidden');
-            });
-
-            // 2. 動態刪除書籍互動 (DOM 移除與特效)
-            $('.btn-delete-book').click(function() {
-                let bookId = $(this).data('id');
-                let trRow = $(this).closest('tr'); // 抓到對應的表格行 (Row)
-
-                if (confirm('確定要永久刪除這本已捐贈的書籍資料嗎？')) {
-                    // 模擬前端直接刪除動畫特效 (第三階段將補上真實的 AJAX 後端剔除請求)
-                    trRow.fadeOut(400, function() {
-                        $(this).remove();
-                    });
-                }
-            });
-        });
-    </script>
 </body>
 
 </html>

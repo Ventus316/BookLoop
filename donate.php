@@ -125,56 +125,6 @@
     </main>
 
     <?php include 'components/footer.php'; ?>
-
-    <script>
-        $(document).ready(function() {
-
-            // 1. 圖片上傳即時預覽功能
-            $('#bimage').change(function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('#image-preview').attr('src', e.target.result).removeClass('hidden');
-                        $('#upload-prompt').addClass('hidden');
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            // 2. 模擬 ISBN 自動抓取功能
-            $('#btn-fetch-isbn').click(function() {
-                let isbn = $('#bisbn').val().trim();
-                if (isbn === '') {
-                    alert('請先輸入 ISBN 號碼！');
-                    return;
-                }
-
-                // 模擬 AJAX 延遲與資料帶入
-                let btn = $(this);
-                let originalText = btn.text();
-                btn.text('抓取中...').prop('disabled', true);
-
-                setTimeout(function() {
-                    $('#btitle').val('網頁程式設計：PHP & MySQL 實戰 (模擬抓取)');
-                    $('#bauthor').val('張教授');
-                    btn.text('抓取成功').removeClass('bg-green-100 text-brand').addClass('bg-brand text-white');
-
-                    setTimeout(() => {
-                        btn.text(originalText).removeClass('bg-brand text-white').addClass('bg-green-100 text-brand').prop('disabled', false);
-                    }, 2000);
-                }, 800);
-            });
-
-            // 3. 表單送出前基礎驗證
-            $('#donateForm').submit(function(e) {
-                if ($('#image-preview').hasClass('hidden')) {
-                    e.preventDefault();
-                    alert('請務必上傳書籍實體照片！');
-                }
-            });
-        });
-    </script>
 </body>
 
 </html>
