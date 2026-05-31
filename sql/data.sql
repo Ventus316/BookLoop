@@ -118,7 +118,7 @@ VALUES (
         '9789862803144',
         '演算法導論 (第四版)',
         'Thomas',
-        'assets/images/book_php.jpg',
+        'assets/images/book_algo.jpg',
         'available',
         3,
         1

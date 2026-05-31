@@ -24,7 +24,7 @@
                     <p class="text-green-100 text-sm">分享您的閒置書籍，讓知識流向需要的人。</p>
                 </div>
 
-                <form id="donateForm" action="api/upload_book.php" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
+                <form id="donateForm" action="api/upload_book.php" method="POST" enctype="multipart/form-data" class="space-y-6">
 
                     <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
                         <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
