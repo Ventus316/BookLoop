@@ -2,16 +2,71 @@
 session_start();
 require_once 'config/database.php';
 
+// ==========================================
+// 1. 接收 GET 篩選參數
+// ==========================================
+// 若為第一次進入頁面 (完全沒有 GET 參數)，我們預設只勾選「待領取 (available)」
+if (empty($_GET)) {
+    $statuses = ['available'];
+    $categories = [];
+    $keyword = '';
+} else {
+    $statuses = $_GET['status'] ?? [];
+    $categories = $_GET['category'] ?? [];
+    $keyword = trim($_GET['keyword'] ?? '');
+}
+
+// ==========================================
+// 2. 動態組裝 SQL WHERE 條件
+// ==========================================
+$where_clauses = [];
+$params = [];
+
+// 🔎 條件 A：關鍵字搜尋 (書名、作者、ISBN)
+if ($keyword !== '') {
+    $where_clauses[] = "(b.btitle LIKE ? OR b.bauthor LIKE ? OR b.bisbn LIKE ?)";
+    $params[] = "%$keyword%";
+    $params[] = "%$keyword%";
+    $params[] = "%$keyword%";
+}
+
+// 📌 條件 B：書籍狀態過濾
+if (!empty($statuses)) {
+    // 產生像 (?, ?) 這樣的佔位符
+    $placeholders = implode(',', array_fill(0, count($statuses), '?'));
+    $where_clauses[] = "b.bstatus IN ($placeholders)";
+    foreach ($statuses as $status) {
+        $params[] = $status;
+    }
+}
+
+// 📂 條件 C：書籍類別過濾
+if (!empty($categories)) {
+    $placeholders = implode(',', array_fill(0, count($categories), '?'));
+    $where_clauses[] = "b.bcategory_id IN ($placeholders)";
+    foreach ($categories as $cat) {
+        $params[] = $cat;
+    }
+}
+
+// ==========================================
+// 3. 執行資料庫查詢
+// ==========================================
 try {
-    // 這裡同樣修正為 b.bdonor_id
     $query = "SELECT b.*, c.ccategory_name, u.uname AS donor_name 
               FROM Book b
               LEFT JOIN Category c ON b.bcategory_id = c.ccategory_id
-              LEFT JOIN User u ON b.bdonor_id = u.user_id
-              ORDER BY b.bbook_id DESC";
+              LEFT JOIN User u ON b.bdonor_id = u.user_id";
+
+    // 如果有任何篩選條件，就把 WHERE 拼接到 SQL 後面
+    if (!empty($where_clauses)) {
+        $query .= " WHERE " . implode(" AND ", $where_clauses);
+    }
+
+    $query .= " ORDER BY b.bbook_id DESC";
 
     $stmt = $conn->prepare($query);
-    $stmt->execute();
+    $stmt->execute($params);
     $real_search_results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("尋書大廳數據撈取失敗：" . $e->getMessage());
@@ -32,27 +87,28 @@ $page_title = '尋書大廳 - 書活 BookLoop';
             <p class="text-gray-500 text-sm mt-1">在這裡尋找你需要的課本、參考書與課外讀物</p>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-8">
+        <form action="search.php" method="GET" class="flex flex-col md:flex-row gap-8">
+
             <aside class="w-full md:w-64 flex-shrink-0 space-y-6">
-                <form id="filterForm" class="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-gray-150 shadow-sm space-y-6">
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2"><span>📌</span> 書籍狀態</h3>
                         <div class="space-y-2.5">
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="status[]" value="available" checked class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">僅顯示「待領取」</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="status[]" value="reserved" class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">顯示已預約</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="status[]" value="available" onchange="this.form.submit()" <?php echo in_array('available', $statuses) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">僅顯示「待領取」</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="status[]" value="reserved" onchange="this.form.submit()" <?php echo in_array('reserved', $statuses) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">顯示已預約</span></label>
                         </div>
                     </div>
                     <hr class="border-gray-100">
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2"><span>📂</span> 書籍類別</h3>
                         <div class="space-y-2.5">
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="1" class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">資訊工程</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="2" class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">數位設計</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="3" class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">語言文學</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="4" class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">通識管理</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="1" onchange="this.form.submit()" <?php echo in_array('1', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">資訊工程</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="2" onchange="this.form.submit()" <?php echo in_array('2', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">數位設計</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="3" onchange="this.form.submit()" <?php echo in_array('3', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">語言文學</span></label>
+                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="4" onchange="this.form.submit()" <?php echo in_array('4', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">通識管理</span></label>
                         </div>
                     </div>
-                </form>
+                </div>
             </aside>
 
             <section class="flex-grow space-y-6">
@@ -62,11 +118,11 @@ $page_title = '尋書大廳 - 書活 BookLoop';
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <input type="text" id="search-input" name="keyword" placeholder="搜尋書名、作者、ISBN..." class="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:border-brand focus:ring-2 focus:ring-green-100 font-medium transition placeholder-gray-400">
+                    <input type="text" id="search-input" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>" placeholder="搜尋書名、作者、ISBN... (輸入後按 Enter 搜尋)" class="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:border-brand focus:ring-2 focus:ring-green-100 font-medium transition placeholder-gray-400">
                 </div>
 
                 <div class="text-sm text-gray-500 font-medium px-1">
-                    找到 <span id="result-count" class="text-brand font-bold text-base"><?php echo count($real_search_results); ?></span> 本書籍
+                    找到 <span id="result-count" class="text-brand font-bold text-base"><?php echo count($real_search_results); ?></span> 本符合條件的書籍
                 </div>
 
                 <div id="book-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -76,12 +132,16 @@ $page_title = '尋書大廳 - 書活 BookLoop';
                             include 'components/book_card.php';
                         }
                     } else {
-                        echo '<div class="col-span-3 text-center py-12 text-gray-400 italic">找不到符合條件的書籍。</div>';
+                        echo '<div class="col-span-3 text-center py-16 bg-white rounded-2xl border border-gray-150 shadow-sm flex flex-col items-center justify-center">
+                                <span class="text-4xl mb-3">📭</span>
+                                <p class="text-gray-500 font-bold">找不到符合條件的書籍</p>
+                                <p class="text-gray-400 text-sm mt-1">請嘗試清除部分篩選條件，或輸入其他關鍵字。</p>
+                              </div>';
                     }
                     ?>
                 </div>
             </section>
-        </div>
+        </form>
     </main>
     <?php include 'components/footer.php'; ?>
 </body>
