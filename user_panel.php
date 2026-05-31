@@ -1,172 +1,127 @@
 <?php
-// 檔名：user_panel.php 頂部防護
 session_start();
+require_once 'config/database.php';
 
-// 🛡️ 防護鎖：檢查是否登入，未登入者直接踢回登入頁
+// 🛡️ 防護 1：未登入者踢回登入頁
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-// 將 Session 內的真實資料帶入變數中，完美取代原本的假陣列
-$current_user = [
-    'uname' => $_SESSION['uname'],
-    'ustudent_id' => 's1121' . $_SESSION['user_id'] // 暫時以 ID 組合模擬學號，後續再從 DB 撈
-];
+$user_id = $_SESSION['user_id'];
 
-// 模擬從資料庫撈出的「我捐贈的書籍」列表
-$my_donated_books = [
-    ['bbook_id' => 1, 'bisbn' => '9789865021234', 'btitle' => '網頁程式設計：PHP & MySQL 實戰', 'bstatus' => 'available', 'bimage_url' => 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=150'],
-    ['bbook_id' => 2, 'bisbn' => '9789573274710', 'btitle' => '設計的心理學', 'bstatus' => 'reserved', 'bimage_url' => 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=150'],
-    ['bbook_id' => 4, 'bisbn' => '9789862803151', 'btitle' => '微積分 (下)', 'bstatus' => 'donated', 'bimage_url' => 'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?q=80&w=150']
-];
+try {
+    // 1. 撈取使用者基本資料
+    $user_stmt = $conn->prepare("SELECT * FROM User WHERE user_id = ?");
+    $user_stmt->execute([$user_id]);
+    $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
 
-// 模擬「我收藏的書籍」
-$my_collected_books = [
-    ['bbook_id' => 5, 'bisbn' => '9789862803144', 'btitle' => '演算法導論 (第四版)', 'bstatus' => 'available', 'bimage_url' => 'https://images.unsplash.com/photo-1474932430478-367d16b99031?q=80&w=150']
-];
+    // 2. 撈取該使用者的所有捐贈書籍 (依照時間倒序)
+    $book_query = "SELECT b.*, c.ccategory_name 
+                   FROM Book b
+                   LEFT JOIN Category c ON b.bcategory_id = c.ccategory_id
+                   WHERE b.bdonor_id = ?
+                   ORDER BY b.bcreated_at DESC";
+    $book_stmt = $conn->prepare($book_query);
+    $book_stmt->execute([$user_id]);
+    $my_books = $book_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 模擬「我領取的書籍」
-$my_received_books = [
-    ['bbook_id' => 6, 'bisbn' => '9789862017050', 'btitle' => 'Clean Code 無瑕的程式碼', 'bstatus' => 'donated', 'bimage_url' => 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=150']
-];
+    // 3. 計算統計數據
+    $total_books = count($my_books);
+} catch (PDOException $e) {
+    die("資料載入失敗：" . $e->getMessage());
+}
+
+$page_title = '個人管理後臺 - 書活 BookLoop';
 ?>
-
-<?php $page_title = '書活 BookLoop | 讓知識在校園流動'; ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <?php include 'components/head.php'; ?>
 
 <body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen font-sans">
-
     <?php include 'components/header.php'; ?>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-        <section class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-full bg-emerald-50 text-brand flex items-center justify-center text-2xl font-black shadow-inner">
-                    <?php echo mb_substr($current_user['uname'], 0, 1, 'UTF-8'); ?>
-                </div>
-                <div>
-                    <h2 class="text-xl font-black text-gray-900">個人管理後台</h2>
-                    <p class="text-sm text-gray-500">歡迎回來，<span class="font-bold text-gray-700"><?php echo $current_user['uname']; ?></span>（<?php echo $current_user['ustudent_id']; ?>）</p>
-                </div>
+        <div class="flex justify-between items-end border-b border-gray-200 pb-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900">我的書房</h1>
+                <p class="text-gray-500 mt-1">管理您的捐贈紀錄與個人資料</p>
             </div>
-            <a href="api/auth_process.php?logout=1" class="text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl border border-red-100 transition flex items-center gap-1.5">
-                <span>🚪</span> 登出系統
+            <a href="donate.php" class="bg-brand text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-green-700 transition shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                新增捐贈書籍
             </a>
-        </section>
+        </div>
 
-        <section class="space-y-4">
-            <div class="border-b border-gray-200">
-                <nav class="flex space-x-6" aria-label="Tabs">
-                    <button id="tab-donated" class="panel-tab border-b-2 border-brand text-brand py-3 px-1 text-sm font-bold flex items-center gap-2">
-                        📦 我的捐贈書籍 (<span class="text-xs"><?php echo count($my_donated_books); ?></span>)
-                    </button>
-                    <button id="tab-collected" class="panel-tab border-b-2 border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300 py-3 px-1 text-sm font-medium flex items-center gap-2">
-                        ❤️ 我的收藏紀錄 (<span class="text-xs"><?php echo count($my_collected_books); ?></span>)
-                    </button>
-                    <button id="tab-received" class="panel-tab border-b-2 border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300 py-3 px-1 text-sm font-medium flex items-center gap-2">
-                        📥 我的領取紀錄 (<span class="text-xs"><?php echo count($my_received_books); ?></span>)
-                    </button>
-                </nav>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-150 text-center">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-emerald-50 text-brand flex items-center justify-center text-3xl font-black mb-4">
+                        <?php echo mb_substr($user['uname'], 0, 1, 'UTF-8'); ?>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900"><?php echo htmlspecialchars($user['uname']); ?></h2>
+                    <p class="text-gray-500 text-sm mt-1"><?php echo htmlspecialchars($user['uemail']); ?></p>
 
-                <div id="content-donated" class="panel-content overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100 text-left">
-                        <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">封面與書名</th>
-                                <th class="px-6 py-4">ISBN</th>
-                                <th class="px-6 py-4">目前狀態</th>
-                                <th class="px-6 py-4 text-right">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                            <?php foreach ($my_donated_books as $book):
-                                $status_text = $book['bstatus'] === 'available' ? '待領取' : ($book['bstatus'] === 'reserved' ? '已預約' : '已捐出');
-                                $status_color = $book['bstatus'] === 'available' ? 'bg-green-100 text-green-700' : ($book['bstatus'] === 'reserved' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700');
-                            ?>
-                                <tr class="hover:bg-gray-50/50 transition duration-150 group">
-                                    <td class="px-6 py-4 flex items-center gap-4">
-                                        <img src="<?php echo $book['bimage_url']; ?>" class="w-10 h-14 object-cover rounded bg-gray-100 shadow-sm">
-                                        <span class="font-bold text-gray-900 group-hover:text-brand transition"><?php echo $book['btitle']; ?></span>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-gray-500"><?php echo $book['bisbn']; ?></td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold <?php echo $status_color; ?>"><?php echo $status_text; ?></span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right space-x-2">
-                                        <button class="text-gray-400 hover:text-brand transition p-1 text-xs font-bold border border-gray-200 rounded-md bg-white hover:border-brand shadow-sm">修改內容</button>
-                                        <button class="btn-delete-book text-gray-400 hover:text-red-500 transition p-1 text-xs font-bold border border-gray-200 rounded-md bg-white hover:border-red-200 shadow-sm" data-id="<?php echo $book['bbook_id']; ?>">刪除資料</button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <div class="mt-6 flex justify-between items-center text-sm border-t border-gray-100 pt-4">
+                        <span class="text-gray-500">常駐地點</span>
+                        <span class="font-bold text-gray-800"><?php echo htmlspecialchars($user['ulocation']); ?></span>
+                    </div>
+                    <div class="mt-3 flex justify-between items-center text-sm">
+                        <span class="text-gray-500">累計捐贈</span>
+                        <span class="font-bold text-brand"><?php echo $total_books; ?> 本</span>
+                    </div>
                 </div>
+            </aside>
 
-                <div id="content-collected" class="panel-content overflow-x-auto hidden">
-                    <table class="min-w-full divide-y divide-gray-100 text-left">
-                        <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">封面與書名</th>
-                                <th class="px-6 py-4">ISBN</th>
-                                <th class="px-6 py-4">書籍現狀</th>
-                                <th class="px-6 py-4 text-right">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                            <?php foreach ($my_collected_books as $book): ?>
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="px-6 py-4 flex items-center gap-4">
-                                        <img src="<?php echo $book['bimage_url']; ?>" class="w-10 h-14 object-cover rounded bg-gray-100 shadow-sm">
-                                        <a href="book_detail.php?id=<?php echo $book['bbook_id']; ?>" class="font-bold text-gray-900 hover:text-brand transition"><?php echo $book['btitle']; ?></a>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-gray-500"><?php echo $book['bisbn']; ?></td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">待領取</span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button class="text-xs text-red-500 font-bold hover:underline">取消收藏</button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <section class="lg:col-span-3">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>📚</span> 我發布的書籍
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <?php if ($total_books > 0): ?>
+                        <?php foreach ($my_books as $book): ?>
+
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full">
+                                <div class="relative h-48 bg-gray-50">
+                                    <img src="<?php echo htmlspecialchars($book['bimage_url']); ?>" class="w-full h-full object-cover">
+                                    <div class="absolute top-2 right-2 bg-white px-2 py-1 rounded-md text-xs font-bold text-gray-600 shadow-sm opacity-90">
+                                        <?php echo $book['bstatus'] === 'available' ? '待領取' : ($book['bstatus'] === 'reserved' ? '已預約' : '已面交'); ?>
+                                    </div>
+                                </div>
+                                <div class="p-4 flex flex-col flex-grow">
+                                    <h4 class="font-bold text-gray-900 line-clamp-1 mb-1"><?php echo htmlspecialchars($book['btitle']); ?></h4>
+                                    <p class="text-xs text-gray-500 mb-4"><?php echo htmlspecialchars($book['bcategory_name']); ?></p>
+
+                                    <div class="mt-auto pt-3 border-t border-gray-50 flex gap-2">
+                                        <a href="edit_book.php?id=<?php echo $book['bbook_id']; ?>" class="w-1/2 text-center py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold hover:bg-blue-100 transition">
+                                            ✏️ 編輯
+                                        </a>
+
+                                        <form action="api/delete_book.php" method="POST" class="w-1/2" onsubmit="return confirm('確定要永久刪除這本書嗎？相關的留言與互動紀錄也會一併刪除！');">
+                                            <input type="hidden" name="bbook_id" value="<?php echo $book['bbook_id']; ?>">
+                                            <button type="submit" class="w-full py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition">
+                                                🗑️ 刪除
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-gray-150 border-dashed text-gray-400">
+                            您尚未發布任何捐贈書籍。<br>
+                            <a href="donate.php" class="text-brand font-bold hover:underline mt-2 inline-block">立刻捐贈第一本書！</a>
+                        </div>
+                    <?php endif; ?>
                 </div>
-
-                <div id="content-received" class="panel-content overflow-x-auto hidden">
-                    <table class="min-w-full divide-y divide-gray-100 text-left">
-                        <thead class="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <tr>
-                                <th class="px-6 py-4">封面與書名</th>
-                                <th class="px-6 py-4">ISBN</th>
-                                <th class="px-6 py-4">交易進度</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                            <?php foreach ($my_received_books as $book): ?>
-                                <tr class="hover:bg-gray-50/50 transition">
-                                    <td class="px-6 py-4 flex items-center gap-4">
-                                        <img src="<?php echo $book['bimage_url']; ?>" class="w-10 h-14 object-cover rounded bg-gray-100 shadow-sm">
-                                        <span class="font-bold text-gray-900"><?php echo $book['btitle']; ?></span>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-gray-500"><?php echo $book['bisbn']; ?></td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-150 text-blue-600 bg-blue-50">面交完成</span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        </section>
+            </section>
+        </div>
     </main>
 
     <?php include 'components/footer.php'; ?>
