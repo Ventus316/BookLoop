@@ -4,7 +4,7 @@
 $host = '127.0.0.1';
 $db   = 'bookloop';
 $user = 'root';
-$pass = ''; // XAMPP 預設密碼為空
+$pass = '123456';
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -21,8 +21,8 @@ $options = [
 ];
 
 try {
-    // 建立 PDO 實例並儲存在 $pdo 變數中
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    // 建立 PDO 實例並儲存在 $conn 變數中 (必須與全站代碼一致！)
+    $conn = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     // 萬一連線失敗，停止程式運行並回傳錯誤訊息
     die("資料庫連線失敗，錯誤原因：" . $e->getMessage());

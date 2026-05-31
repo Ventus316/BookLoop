@@ -12,6 +12,11 @@ VALUES ('資訊工程'),
 -- 2. 預填用戶表 (User)
 -- 包含 1 個管理員與 3 個一般學生
 -- ==========================================
+-- ==========================================
+-- 2. 預填用戶表 (User)
+-- 包含 1 個管理員與 3 個一般學生
+-- 備註：upassword 已轉換為 BCRYPT 雜湊，前端登入明文皆為 '123456'
+-- ==========================================
 INSERT INTO
     `User` (
         `ustudent_id`,
@@ -19,41 +24,46 @@ INSERT INTO
         `uemail`,
         `upassword`,
         `ulocation`,
-        `urole`
+        `urole`,
+        `status`
     )
 VALUES (
         's1121400',
         '系統管理員',
         'admin@yzu.edu.tw',
-        '123456',
+        '$2y$10$PHcT2yHCkaqwlfb7ZjXk5uzX5oRvvuMRrrBJfKwfdRfhMeYTU7WkK',
         '資傳系辦',
-        'admin'
+        'admin',
+        'active'
     ),
     (
         's1121499',
         '陳同學',
         'user1@yzu.edu.tw',
-        '123456',
+        '$2y$10$PHcT2yHCkaqwlfb7ZjXk5uzX5oRvvuMRrrBJfKwfdRfhMeYTU7WkK',
         '一館大廳',
-        'user'
+        'user',
+        'active'
     ),
     (
         's1121500',
         '林同學',
         'user2@yzu.edu.tw',
-        '123456',
+        '$2y$10$PHcT2yHCkaqwlfb7ZjXk5uzX5oRvvuMRrrBJfKwfdRfhMeYTU7WkK',
         '圖書館前',
-        'user'
+        'user',
+        'active'
     ),
     (
         's1121501',
         '王同學',
         'user3@yzu.edu.tw',
-        '123456',
+        '$2y$10$PHcT2yHCkaqwlfb7ZjXk5uzX5oRvvuMRrrBJfKwfdRfhMeYTU7WkK',
         '三館超商',
-        'user'
+        'user',
+        'active'
     );
-
+	
 -- ==========================================
 -- 3. 預填書籍表 (Book)
 -- 包含不同狀態 (available, reserved, donated) 供前端切換樣式

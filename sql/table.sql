@@ -1,14 +1,17 @@
 -- 1. 建立用戶表 (User)
 CREATE TABLE `User` (
-    `user_id` INT AUTO_INCREMENT NOT NULL,
-    `ustudent_id` VARCHAR(50) NOT NULL COMMENT '學號',
-    `uname` VARCHAR(50) NOT NULL COMMENT '姓名',
-    `uemail` VARCHAR(100) NOT NULL UNIQUE COMMENT '帳號/Email',
-    `upassword` VARCHAR(255) NOT NULL COMMENT '密碼（雜湊值）',
-    `ulocation` VARCHAR(100) DEFAULT NULL COMMENT '預設面交地點',
-    `urole` VARCHAR(20) DEFAULT 'user' COMMENT '權限 (admin 或 user)',
-    PRIMARY KEY (`user_id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+  `user_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '用戶唯一識別碼',
+  `ustudent_id` varchar(50) NOT NULL COMMENT '學號',
+  `uname` varchar(50) NOT NULL COMMENT '姓名/暱稱',
+  `uemail` varchar(100) NOT NULL COMMENT '學校信箱',
+  `upassword` varchar(255) NOT NULL COMMENT 'BCRYPT加密密碼',
+  `ulocation` varchar(100) NOT NULL COMMENT '常駐面交地點',
+  `urole` varchar(20) NOT NULL DEFAULT 'user' COMMENT '系統權限: admin / user',
+  `status` varchar(20) NOT NULL DEFAULT 'active' COMMENT '帳號狀態: active / banned',
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `uemail_unique` (`uemail`),
+  UNIQUE KEY `ustudent_id_unique` (`ustudent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. 建立分類表 (Category)
 CREATE TABLE `Category` (

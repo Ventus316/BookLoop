@@ -1,10 +1,30 @@
-<?php $page_title = '書活 BookLoop | 讓知識在校園流動'; ?>
+<?php
+session_start();
+require_once 'config/database.php';
+
+try {
+    // 這裡已經幫您修正為 b.bdonor_id 了！
+    $query = "SELECT b.*, c.ccategory_name, u.uname AS donor_name 
+              FROM Book b
+              LEFT JOIN Category c ON b.bcategory_id = c.ccategory_id
+              LEFT JOIN User u ON b.bdonor_id = u.user_id
+              ORDER BY b.bbook_id DESC 
+              LIMIT 4";
+
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    $real_books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("首頁數據撈取失敗：" . $e->getMessage());
+}
+
+$page_title = '書活 BookLoop | 讓知識在校園流動';
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <?php include 'components/head.php'; ?>
 
 <body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen font-sans">
-
     <?php include 'components/header.php'; ?>
 
     <main class="flex-grow">
@@ -63,25 +83,18 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <?php
-                // 切版階段：建立假資料陣列來模擬迴圈 (第三階段時這裡會換成從資料庫 PDO 撈取)
-                $mock_books = [
-                    ['bstatus' => 'available', 'bimage_url' => 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400', 'ccategory_name' => '資訊工程', 'btitle' => '演算法導論 (第四版)', 'bauthor' => 'Thomas H. Cormen', 'donor_name' => '陳同學'],
-                    ['bstatus' => 'available', 'bimage_url' => 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400', 'ccategory_name' => '數位設計', 'btitle' => '設計的心理學', 'bauthor' => 'Don Norman', 'donor_name' => '林同學'],
-                    ['bstatus' => 'reserved', 'bimage_url' => 'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=400', 'ccategory_name' => '資訊工程', 'btitle' => 'Clean Code 無瑕的程式碼', 'bauthor' => 'Robert C. Martin', 'donor_name' => '張同學'],
-                    ['bstatus' => 'available', 'bimage_url' => 'https://images.unsplash.com/photo-1474932430478-367d16b99031?q=80&w=400', 'ccategory_name' => '語言文學', 'btitle' => '百年孤寂', 'bauthor' => 'Gabriel García Márquez', 'donor_name' => '王同學']
-                ];
-
-                // 迴圈印出共用卡片
-                foreach ($mock_books as $book) {
-                    include 'components/book_card.php';
+                if (count($real_books) > 0) {
+                    foreach ($real_books as $book) {
+                        include 'components/book_card.php';
+                    }
+                } else {
+                    echo '<div class="col-span-4 text-center py-12 text-gray-400 italic">校園內目前暫無上架書籍，歡迎成為第一位捐贈者！</div>';
                 }
                 ?>
             </div>
         </section>
     </main>
-
     <?php include 'components/footer.php'; ?>
-
 </body>
 
 </html>
