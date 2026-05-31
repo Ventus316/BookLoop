@@ -1,8 +1,17 @@
 <?php
-// 模擬第三階段從 Session 撈取的登入用戶資訊
+// 檔名：user_panel.php 頂部防護
+session_start();
+
+// 🛡️ 防護鎖：檢查是否登入，未登入者直接踢回登入頁
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// 將 Session 內的真實資料帶入變數中，完美取代原本的假陣列
 $current_user = [
-    'uname' => '王同學',
-    'ustudent_id' => 's1121501'
+    'uname' => $_SESSION['uname'],
+    'ustudent_id' => 's1121' . $_SESSION['user_id'] // 暫時以 ID 組合模擬學號，後續再從 DB 撈
 ];
 
 // 模擬從資料庫撈出的「我捐贈的書籍」列表

@@ -17,10 +17,41 @@
             </nav>
 
             <div class="flex items-center gap-4">
-                <a href="login.php" class="text-brand font-medium hover:text-green-700 transition">登入</a>
-                <a href="donate.php" class="bg-brand text-white px-5 py-2 rounded-md font-medium hover:bg-green-700 transition shadow-sm">
-                    我要捐書
-                </a>
+                <?php
+                // 安全啟動 Session 檢查機制
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                // 判斷使用者是否已經登入
+                if (isset($_SESSION['user_id'])):
+                    // 🌟 狀況 A：已登入狀態
+                ?>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-650">
+                            👋 你好，<strong class="text-gray-900"><?php echo htmlspecialchars($_SESSION['uname']); ?></strong>
+                        </span>
+
+                        <?php if ($_SESSION['urole'] === 'admin'): ?>
+                            <a href="admin_panel.php" class="text-xs bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1.5 rounded-lg font-bold hover:bg-rose-100 transition">
+                                🛡️ 系統後台
+                            </a>
+                        <?php else: ?>
+                            <a href="user_panel.php" class="text-xs bg-green-50 text-brand border border-green-100 px-3 py-1.5 rounded-lg font-bold hover:bg-green-100 transition">
+                                📦 個人後台
+                            </a>
+                        <?php endif; ?>
+
+                        <a href="api/auth_process.php?logout=1" class="text-xs text-gray-400 hover:text-red-500 font-medium transition ml-2">
+                            登出
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <a href="login.php" class="text-sm font-bold text-gray-650 hover:text-brand transition">登入</a>
+                    <a href="register.php" class="bg-brand text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition shadow-sm">
+                        註冊
+                    </a>
+                <?php endif; ?>
             </div>
 
         </div>

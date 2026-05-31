@@ -1,8 +1,17 @@
 <?php
-// 模擬第三階段從 Session 驗證的管理員登入狀態
+// 檔名：admin_panel.php 頂部防護
+session_start();
+
+// 🛡️ 超級防護鎖：未登入，或者角色不等於管理員 (admin) 者，一律強制載入並退回首頁
+if (!isset($_SESSION['user_id']) || $_SESSION['urole'] !== 'admin') {
+    echo "<script>alert('權限不足！此專區僅限系統管理員訪問。'); window.location.href='index.php';</script>";
+    exit;
+}
+
+// 驗證成功，帶入管理員真實身分
 $admin_user = [
-    'uname' => '系統管理員',
-    'urole' => 'admin'
+    'uname' => $_SESSION['uname'],
+    'urole' => $_SESSION['urole']
 ];
 
 // 模擬全站書籍資料 (用於商品下架管理)
