@@ -82,7 +82,7 @@ VALUES (
         '9789865021234',
         '網頁程式設計：PHP & MySQL 實戰',
         '張教授',
-        'assets/images/default.png',
+        'assets/images/book_php.jpg',
         'available',
         2,
         1
@@ -91,7 +91,7 @@ VALUES (
         '9789573274710',
         '設計的心理學',
         'Don Norman',
-        'assets/images/default.png',
+        'assets/images/book_design.jpg',
         'available',
         3,
         2
@@ -100,7 +100,7 @@ VALUES (
         '9789863445343',
         '百年孤寂',
         'Gabriel',
-        'assets/images/default.png',
+        'assets/images/book_novel.jpg',
         'reserved',
         4,
         3
@@ -109,7 +109,7 @@ VALUES (
         '9789862803151',
         '微積分 (下)',
         'James Stewart',
-        'assets/images/default.png',
+        'assets/images/book_calculus.jpg',
         'donated',
         2,
         4
@@ -118,7 +118,7 @@ VALUES (
         '9789862803144',
         '演算法導論 (第四版)',
         'Thomas',
-        'assets/images/default.png',
+        'assets/images/book_php.jpg',
         'available',
         3,
         1
@@ -127,12 +127,12 @@ VALUES (
         '9789862017050',
         'Clean Code 無瑕的程式碼',
         'Robert C. Martin',
-        'assets/images/default.png',
+        'assets/images/book_cleancode.jpg',
         'reserved',
         4,
         1
     );
-
+	
 -- ==========================================
 -- 4. 預填轉手紀錄表 (Record)
 -- 針對狀態為 reserved (預約中) 與 donated (已捐出) 的書籍建立交易紀錄

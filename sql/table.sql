@@ -26,7 +26,7 @@ CREATE TABLE `Book` (
     `bisbn` VARCHAR(20) DEFAULT NULL COMMENT '國際標準書號',
     `btitle` VARCHAR(100) NOT NULL COMMENT '書名',
     `bauthor` VARCHAR(100) DEFAULT NULL COMMENT '作者',
-    `bimage_url` VARCHAR(255) DEFAULT NULL COMMENT '封面圖片路徑',
+	`bimage_url` VARCHAR(255) DEFAULT 'assets/images/default.png' COMMENT '封面圖片路徑',
     `bstatus` VARCHAR(50) DEFAULT 'available' COMMENT '狀態 (available, reserved, donated)',
     `bdonor_id` INT NOT NULL COMMENT '捐贈者用戶 ID',
     `bcategory_id` INT NOT NULL COMMENT '書籍分類 ID',
