@@ -66,36 +66,6 @@ $(document).ready(function() {
     // ==========================================
     // 3. 書籍詳情頁面 (Book Detail)
     // ==========================================
-    let isLiked = false;
-    $('#btn-like').click(function() {
-        isLiked = !isLiked;
-        let count = parseInt($('#like-count').text());
-        if (isLiked) {
-            $('#like-count').text(count + 1);
-            $(this).removeClass('text-gray-600').addClass('text-red-500 border-red-200 bg-red-50');
-            $(this).find('.icon-heart').attr('fill', 'currentColor').addClass('text-red-500');
-        } else {
-            $('#like-count').text(count - 1);
-            $(this).removeClass('text-red-500 border-red-200 bg-red-50').addClass('text-gray-600');
-            $(this).find('.icon-heart').attr('fill', 'none').removeClass('text-red-500');
-        }
-    });
-
-    let isCollected = false;
-    $('#btn-collect').click(function() {
-        isCollected = !isCollected;
-        let count = parseInt($('#collect-count').text());
-        if (isCollected) {
-            $('#collect-count').text(count + 1);
-            $(this).removeClass('text-gray-600').addClass('text-yellow-500 border-yellow-200 bg-yellow-50');
-            $(this).find('.icon-bookmark').attr('fill', 'currentColor').addClass('text-yellow-500');
-        } else {
-            $('#collect-count').text(count - 1);
-            $(this).removeClass('text-yellow-500 border-yellow-200 bg-yellow-50').addClass('text-gray-600');
-            $(this).find('.icon-bookmark').attr('fill', 'none').removeClass('text-yellow-500');
-        }
-    });
-
     $('#commentForm').submit(function(e) {
         e.preventDefault();
         let commentText = $('#comment-input').val().trim();
@@ -202,4 +172,79 @@ $(document).ready(function() {
         }
     });
 
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 找到網頁上的點讚與收藏按鈕
+    const btnLike = document.getElementById('btn-like');
+    const btnCollect = document.getElementById('btn-collect');
+    
+    // 💡 為了讓 JS 知道現在是哪一本書，我們必須從網址列抓取 id 參數
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookId = urlParams.get('id');
+
+    // 處理互動的核心共用函數
+    const handleInteraction = async (type, buttonElement, countElementId) => {
+        if (!bookId) return;
+
+        try {
+            // 發送 AJAX 請求到後端 API
+            const response = await fetch('api/toggle_interaction.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    book_id: bookId,
+                    type: type
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // 1. 動態更新畫面上的數字
+                document.getElementById(countElementId).textContent = result.new_count;
+                
+                // 2. 判斷是點讚還是收藏，給予專屬的顏色切換
+                const svgIcon = buttonElement.querySelector('svg');
+
+                if (result.action === 'added') {
+                    if (type === 'like') {
+                        buttonElement.classList.add('text-red-500', 'bg-red-50', 'border-red-200');
+                        buttonElement.classList.remove('text-gray-650', 'border-gray-200');
+                        svgIcon.setAttribute('fill', 'currentColor'); // 實心愛心
+                    } else {
+                        buttonElement.classList.add('text-yellow-600', 'bg-yellow-50', 'border-yellow-200');
+                        buttonElement.classList.remove('text-gray-650', 'border-gray-200');
+                        svgIcon.setAttribute('fill', 'currentColor'); // 實心書籤
+                    }
+                } else {
+                    if (type === 'like') {
+                        buttonElement.classList.remove('text-red-500', 'bg-red-50', 'border-red-200');
+                        buttonElement.classList.add('text-gray-650', 'border-gray-200');
+                        svgIcon.setAttribute('fill', 'none'); // 空心愛心
+                    } else {
+                        buttonElement.classList.remove('text-yellow-600', 'bg-yellow-50', 'border-yellow-200');
+                        buttonElement.classList.add('text-gray-650', 'border-gray-200');
+                        svgIcon.setAttribute('fill', 'none'); // 空心書籤
+                    }
+                }
+            } else {
+                alert(result.message); // 例如未登入的提示
+            }
+        } catch (error) {
+            console.error('AJAX 請求失敗:', error);
+        }
+    };
+
+    // 綁定點擊事件
+    if (btnLike) {
+        btnLike.addEventListener('click', () => handleInteraction('like', btnLike, 'like-count'));
+    }
+
+    if (btnCollect) {
+        btnCollect.addEventListener('click', () => handleInteraction('collect', btnCollect, 'collect-count'));
+    }
 });

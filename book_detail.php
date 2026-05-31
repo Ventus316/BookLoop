@@ -40,6 +40,18 @@ try {
     $collect_stmt->execute([$book_id]);
     $collect_count = $collect_stmt->fetchColumn();
 
+    $user_has_liked = false;
+    $user_has_collected = false;
+
+    if (isset($_SESSION['user_id'])) {
+        $check_stmt = $conn->prepare("SELECT iinteraction_type FROM Interaction WHERE ibook_id = ? AND iuser_id = ?");
+        $check_stmt->execute([$book_id, $_SESSION['user_id']]);
+        $user_interactions = $check_stmt->fetchAll(PDO::FETCH_COLUMN); // 撈出 ['like', 'collect'] 陣列
+
+        if (in_array('like', $user_interactions)) $user_has_liked = true;
+        if (in_array('collect', $user_interactions)) $user_has_collected = true;
+    }
+
     // 4. 撈取該書籍的歷史留言清單
     $comment_query = "SELECT i.*, u.uname 
                       FROM Interaction i
@@ -113,14 +125,24 @@ $page_title = $book['btitle'] . " - 書活 BookLoop";
                 </div>
 
                 <div class="flex flex-wrap items-center gap-4 pt-4">
-                    <button id="btn-like" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-650 hover:text-red-500 font-bold text-sm hover:bg-red-50 hover:border-red-100 transition shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 icon-heart" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <?php
+                    $like_class = $user_has_liked ? 'text-red-500 bg-red-50 border-red-200' : 'text-gray-650 border-gray-200';
+                    $like_fill = $user_has_liked ? 'currentColor' : 'none';
+
+
+                    $collect_class = $user_has_collected ? 'text-yellow-600 bg-yellow-50 border-yellow-200' : 'text-gray-650 border-gray-200';
+                    $collect_fill = $user_has_collected ? 'currentColor' : 'none';
+                    ?>
+
+                    <button id="btn-like" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border <?php echo $like_class; ?> hover:text-red-500 font-bold text-sm hover:bg-red-50 hover:border-red-100 transition shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 icon-heart" fill="<?php echo $like_fill; ?>" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                         點讚 (<span id="like-count"><?php echo $like_count; ?></span>)
                     </button>
-                    <button id="btn-collect" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-650 hover:text-yellow-600 font-bold text-sm hover:bg-yellow-50 hover:border-yellow-100 transition shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 icon-bookmark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                    <button id="btn-collect" class="flex items-center gap-2 px-4 py-2.5 rounded-xl border <?php echo $collect_class; ?> hover:text-yellow-600 font-bold text-sm hover:bg-yellow-50 hover:border-yellow-100 transition shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 icon-bookmark" fill="<?php echo $collect_fill; ?>" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                         </svg>
                         收藏 (<span id="collect-count"><?php echo $collect_count; ?></span>)
@@ -179,7 +201,6 @@ $page_title = $book['btitle'] . " - 書活 BookLoop";
     </main>
 
     <?php include 'components/footer.php'; ?>
-    <script src="assets/script.js"></script>
 </body>
 
 </html>
