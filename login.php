@@ -1,24 +1,7 @@
+<?php $page_title = '書活 BookLoop | 讓知識在校園流動'; ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>歡迎回來 - 書活 BookLoop</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: '#059669',
-                    }
-                }
-            }
-        }
-    </script>
-</head>
+<?php include 'components/head.php'; ?>
 
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex">
 
