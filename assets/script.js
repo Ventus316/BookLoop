@@ -275,4 +275,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ==========================================
+    // 🌟 功能 C：申請預約領取 (v0.5.0)
+    // ==========================================
+    const btnReserve = document.getElementById('btn-reserve');
+
+    if (btnReserve) {
+        btnReserve.addEventListener('click', async () => {
+            // 再次確認防呆
+            if (!confirm('確定要預約領取這本書嗎？預約後請務必與捐贈者聯繫面交！')) return;
+            if (!bookId) return;
+
+            // 讓按鈕呈現載入中，防止連點
+            const originalText = btnReserve.innerHTML;
+            btnReserve.innerHTML = '🔄 處理中...';
+            btnReserve.disabled = true;
+            btnReserve.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                const response = await fetch('api/reserve_book.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ book_id: bookId })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert(`🎉 ${result.message}\n您的交易編號為：${result.trade_code}`);
+                    // 預約成功後，強制重新整理頁面，讓 PHP 重新渲染「已預約」的狀態標籤
+                    window.location.reload();
+                } else {
+                    alert(`❌ ${result.message}`);
+                    // 失敗的話把按鈕恢復原狀
+                    btnReserve.innerHTML = originalText;
+                    btnReserve.disabled = false;
+                    btnReserve.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            } catch (error) {
+                console.error('預約請求失敗:', error);
+                alert('系統連線發生異常，請稍後再試！');
+                btnReserve.innerHTML = originalText;
+                btnReserve.disabled = false;
+                btnReserve.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        });
+    }
 });
+

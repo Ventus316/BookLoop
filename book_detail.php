@@ -149,7 +149,7 @@ $page_title = $book['btitle'] . " - 書活 BookLoop";
                     </button>
 
                     <?php if ($book['bstatus'] === 'available'): ?>
-                        <button class="bg-brand text-white px-8 py-2.5 rounded-xl text-sm font-bold hover:bg-green-700 transition shadow-md ml-auto">
+                        <button id="btn-reserve" class="bg-brand text-white px-8 py-2.5 rounded-xl text-sm font-bold hover:bg-green-700 transition shadow-md ml-auto">
                             🤝 申請預約領取
                         </button>
                     <?php else: ?>
