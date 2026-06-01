@@ -1,7 +1,27 @@
-<?php $page_title = '書活 BookLoop | 讓知識在校園流動'; ?>
+<?php
+session_start();
+require_once 'config/database.php';
+
+// 🛡️ 防護：未登入者踢回登入頁 (保護捐書頁面)
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+try {
+    // 🌟 動態撈取書籍分類，供下拉選單使用
+    $cat_stmt = $conn->query("SELECT * FROM Category ORDER BY ccategory_id ASC");
+    $categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("分類資料載入失敗：" . $e->getMessage());
+}
+
+$page_title = '書活 BookLoop | 讓知識在校園流動';
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <?php include 'components/head.php'; ?>
+
 
 <body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen font-sans">
 
@@ -57,12 +77,13 @@
 
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1.5">書籍類別 <span class="text-red-500">*</span></label>
-                            <select name="bcategory_id" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition bg-white">
-                                <option value="" disabled selected>請選擇類別...</option>
-                                <option value="1">資訊工程</option>
-                                <option value="2">數位設計</option>
-                                <option value="3">語言文學</option>
-                                <option value="4">通識管理</option>
+                            <select name="bcategory_id" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-brand transition bg-white">
+                                <option value="" disabled selected>請選擇一個最適合的分類</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo $cat['ccategory_id']; ?>">
+                                        <?php echo htmlspecialchars($cat['ccategory_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 

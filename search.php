@@ -5,14 +5,13 @@ require_once 'config/database.php';
 // ==========================================
 // 1. 接收 GET 篩選參數
 // ==========================================
-// 若為第一次進入頁面 (完全沒有 GET 參數)，我們預設只勾選「待領取 (available)」
 if (empty($_GET)) {
     $statuses = ['available'];
-    $categories = [];
+    $selected_categories = []; // 💡 變數改名，避免衝突
     $keyword = '';
 } else {
     $statuses = $_GET['status'] ?? [];
-    $categories = $_GET['category'] ?? [];
+    $selected_categories = $_GET['category'] ?? []; // 💡 變數改名，避免衝突
     $keyword = trim($_GET['keyword'] ?? '');
 }
 
@@ -32,7 +31,6 @@ if ($keyword !== '') {
 
 // 📌 條件 B：書籍狀態過濾
 if (!empty($statuses)) {
-    // 產生像 (?, ?) 這樣的佔位符
     $placeholders = implode(',', array_fill(0, count($statuses), '?'));
     $where_clauses[] = "b.bstatus IN ($placeholders)";
     foreach ($statuses as $status) {
@@ -41,10 +39,10 @@ if (!empty($statuses)) {
 }
 
 // 📂 條件 C：書籍類別過濾
-if (!empty($categories)) {
-    $placeholders = implode(',', array_fill(0, count($categories), '?'));
+if (!empty($selected_categories)) { // 💡 使用新的變數名稱
+    $placeholders = implode(',', array_fill(0, count($selected_categories), '?'));
     $where_clauses[] = "b.bcategory_id IN ($placeholders)";
-    foreach ($categories as $cat) {
+    foreach ($selected_categories as $cat) {
         $params[] = $cat;
     }
 }
@@ -62,6 +60,9 @@ try {
     if (!empty($where_clauses)) {
         $query .= " WHERE " . implode(" AND ", $where_clauses);
     }
+
+    $cat_stmt = $conn->query("SELECT * FROM Category ORDER BY ccategory_id ASC");
+    $all_categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $query .= " ORDER BY b.bbook_id DESC";
 
@@ -102,10 +103,18 @@ $page_title = '尋書大廳 - 書活 BookLoop';
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2"><span>📂</span> 書籍類別</h3>
                         <div class="space-y-2.5">
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="1" onchange="this.form.submit()" <?php echo in_array('1', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">資訊工程</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="2" onchange="this.form.submit()" <?php echo in_array('2', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">數位設計</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="3" onchange="this.form.submit()" <?php echo in_array('3', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">語言文學</span></label>
-                            <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group"><input type="checkbox" name="category[]" value="4" onchange="this.form.submit()" <?php echo in_array('4', $categories) ? 'checked' : ''; ?> class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand"><span class="group-hover:text-gray-900 transition">通識管理</span></label>
+                            <?php foreach ($all_categories as $cat): ?>
+                                <label class="flex items-center text-sm text-gray-600 font-medium cursor-pointer group">
+                                    <input type="checkbox" name="category[]"
+                                        value="<?php echo $cat['ccategory_id']; ?>"
+                                        onchange="this.form.submit()"
+                                        <?php echo in_array($cat['ccategory_id'], $selected_categories) ? 'checked' : ''; ?>
+                                        class="w-4 h-4 rounded text-brand focus:ring-brand border-gray-300 mr-2.5 accent-brand">
+                                    <span class="group-hover:text-gray-900 transition">
+                                        <?php echo htmlspecialchars($cat['ccategory_name']); ?>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>

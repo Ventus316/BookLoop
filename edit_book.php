@@ -25,6 +25,9 @@ try {
         echo "<script>alert('錯誤：查無此書籍或您無權限編輯！'); window.location.href='user_panel.php';</script>";
         exit;
     }
+
+    $cat_stmt = $conn->query("SELECT * FROM Category ORDER BY ccategory_id ASC");
+    $categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("資料載入失敗：" . $e->getMessage());
 }
@@ -79,10 +82,11 @@ $page_title = '編輯書籍 - 書活 BookLoop';
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1.5">書籍類別 <span class="text-red-500">*</span></label>
                                 <select name="bcategory_id" required class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 transition bg-white">
-                                    <option value="1" <?php echo $book['bcategory_id'] == 1 ? 'selected' : ''; ?>>資訊工程</option>
-                                    <option value="2" <?php echo $book['bcategory_id'] == 2 ? 'selected' : ''; ?>>數位設計</option>
-                                    <option value="3" <?php echo $book['bcategory_id'] == 3 ? 'selected' : ''; ?>>語言文學</option>
-                                    <option value="4" <?php echo $book['bcategory_id'] == 4 ? 'selected' : ''; ?>>通識管理</option>
+                                    <?php foreach ($categories as $cat): ?>
+                                        <option value="<?php echo $cat['ccategory_id']; ?>" <?php echo $book['bcategory_id'] == $cat['ccategory_id'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($cat['ccategory_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div>
