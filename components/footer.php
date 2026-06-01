@@ -14,4 +14,5 @@
     </div>
 </footer>
 
-<script src="assets/script.js"></script>
+<script src="assets/script.js?v=<?php echo time(); ?>"></script>
+<!-- <script src="assets/script.js"></script> -->

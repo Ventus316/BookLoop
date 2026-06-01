@@ -66,32 +66,6 @@ $(document).ready(function() {
     // ==========================================
     // 3. 書籍詳情頁面 (Book Detail)
     // ==========================================
-    $('#commentForm').submit(function(e) {
-        e.preventDefault();
-        let commentText = $('#comment-input').val().trim();
-        if (commentText === '') return;
-        $('#empty-state').hide();
-
-        let now = new Date();
-        let timeString = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-
-        let newCommentHTML = `
-            <div class="flex gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-100 hidden">
-                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex-shrink-0 flex items-center justify-center font-bold text-xs">我</div>
-                <div>
-                    <div class="flex items-baseline gap-2 mb-0.5">
-                        <span class="text-sm font-bold text-gray-800">當前用戶</span>
-                        <span class="text-xs text-gray-400">${timeString}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${commentText}</p>
-                </div>
-            </div>`;
-
-        let $newComment = $(newCommentHTML);
-        $('#comment-list').prepend($newComment);
-        $newComment.fadeIn(400);
-        $('#comment-input').val('');
-    });
 
     // ==========================================
     // 4. 個人管理後臺 (User Panel)
@@ -176,75 +150,129 @@ $(document).ready(function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 找到網頁上的點讚與收藏按鈕
-    const btnLike = document.getElementById('btn-like');
-    const btnCollect = document.getElementById('btn-collect');
-    
-    // 💡 為了讓 JS 知道現在是哪一本書，我們必須從網址列抓取 id 參數
+    // 從網址列抓取 id 參數
     const urlParams = new URLSearchParams(window.location.search);
     const bookId = urlParams.get('id');
 
-    // 處理互動的核心共用函數
+    // ==========================================
+    // 🌟 功能 A：點讚與收藏 (v0.4.0)
+    // ==========================================
+    const btnLike = document.getElementById('btn-like');
+    const btnCollect = document.getElementById('btn-collect');
+
     const handleInteraction = async (type, buttonElement, countElementId) => {
         if (!bookId) return;
 
         try {
-            // 發送 AJAX 請求到後端 API
             const response = await fetch('api/toggle_interaction.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    book_id: bookId,
-                    type: type
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ book_id: bookId, type: type })
             });
-
             const result = await response.json();
 
             if (result.status === 'success') {
-                // 1. 動態更新畫面上的數字
                 document.getElementById(countElementId).textContent = result.new_count;
-                
-                // 2. 判斷是點讚還是收藏，給予專屬的顏色切換
                 const svgIcon = buttonElement.querySelector('svg');
 
                 if (result.action === 'added') {
                     if (type === 'like') {
                         buttonElement.classList.add('text-red-500', 'bg-red-50', 'border-red-200');
                         buttonElement.classList.remove('text-gray-650', 'border-gray-200');
-                        svgIcon.setAttribute('fill', 'currentColor'); // 實心愛心
+                        svgIcon.setAttribute('fill', 'currentColor');
                     } else {
                         buttonElement.classList.add('text-yellow-600', 'bg-yellow-50', 'border-yellow-200');
                         buttonElement.classList.remove('text-gray-650', 'border-gray-200');
-                        svgIcon.setAttribute('fill', 'currentColor'); // 實心書籤
+                        svgIcon.setAttribute('fill', 'currentColor');
                     }
                 } else {
                     if (type === 'like') {
                         buttonElement.classList.remove('text-red-500', 'bg-red-50', 'border-red-200');
                         buttonElement.classList.add('text-gray-650', 'border-gray-200');
-                        svgIcon.setAttribute('fill', 'none'); // 空心愛心
+                        svgIcon.setAttribute('fill', 'none');
                     } else {
                         buttonElement.classList.remove('text-yellow-600', 'bg-yellow-50', 'border-yellow-200');
                         buttonElement.classList.add('text-gray-650', 'border-gray-200');
-                        svgIcon.setAttribute('fill', 'none'); // 空心書籤
+                        svgIcon.setAttribute('fill', 'none');
                     }
                 }
             } else {
-                alert(result.message); // 例如未登入的提示
+                alert(result.message);
             }
         } catch (error) {
             console.error('AJAX 請求失敗:', error);
         }
     };
 
-    // 綁定點擊事件
-    if (btnLike) {
-        btnLike.addEventListener('click', () => handleInteraction('like', btnLike, 'like-count'));
-    }
+    if (btnLike) btnLike.addEventListener('click', () => handleInteraction('like', btnLike, 'like-count'));
+    if (btnCollect) btnCollect.addEventListener('click', () => handleInteraction('collect', btnCollect, 'collect-count'));
 
-    if (btnCollect) {
-        btnCollect.addEventListener('click', () => handleInteraction('collect', btnCollect, 'collect-count'));
+
+    // ==========================================
+    // 🌟 功能 B：社群留言板 AJAX 寫入 (v0.4.1)
+    // ==========================================
+    const commentForm = document.getElementById('commentForm');
+    const commentInput = document.getElementById('comment-input');
+    const commentList = document.getElementById('comment-list');
+    const emptyState = document.getElementById('empty-state');
+
+    if (commentForm) {
+        commentForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // 阻止表單預設的網頁重整
+            
+            const content = commentInput.value.trim();
+            if (content === '' || !bookId) return;
+
+            try {
+                const response = await fetch('api/add_comment.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        book_id: bookId,
+                        content: content
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // 1. 若原本有「目前沒有留言」的提示，將其隱藏
+                    if (emptyState) emptyState.style.display = 'none';
+
+                    // 2. 擷取留言者名字的第一個字作為頭像
+                    const firstChar = result.uname.charAt(0);
+
+                    // 3. 動態組合新留言的 HTML 結構
+                    const newCommentHTML = `
+                        <div class="flex gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100 opacity-0 transition-opacity duration-500" id="new-comment-${Date.now()}">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex-shrink-0 flex items-center justify-center font-black text-xs">
+                                ${firstChar}
+                            </div>
+                            <div>
+                                <div class="flex items-baseline gap-2 mb-1">
+                                    <span class="text-sm font-bold text-gray-900">${result.uname} (剛剛)</span>
+                                    <span class="text-xs text-gray-400 font-mono">${result.time}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 leading-relaxed">${result.content}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // 4. 將新留言安插到列表的最上方
+                    commentList.insertAdjacentHTML('afterbegin', newCommentHTML);
+                    
+                    // 5. 觸發淡入動畫並清空輸入框
+                    setTimeout(() => {
+                        commentList.firstElementChild.classList.remove('opacity-0');
+                    }, 50);
+                    commentInput.value = '';
+
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('留言發布失敗:', error);
+            }
+        });
     }
 });
