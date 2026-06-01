@@ -147,11 +147,11 @@ $page_title = '最高權限管理中心 - 書活 BookLoop';
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-sm">
                             <?php foreach ($all_categories as $cat): ?>
-                                <tr class="hover:bg-gray-50/50 transition">
+                                <tr class="hover:bg-gray-50/50 transition duration-300" id="cat-row-<?php echo $cat['ccategory_id']; ?>">
                                     <td class="px-6 py-3.5 font-mono text-gray-400"><?php echo $cat['ccategory_id']; ?></td>
                                     <td class="px-6 py-3.5 font-bold text-gray-900 cat-name"><?php echo htmlspecialchars($cat['ccategory_name']); ?></td>
                                     <td class="px-6 py-3.5 text-right">
-                                        <button class="btn-delete-cat text-xs font-bold text-gray-400 hover:text-red-500 transition">刪除</button>
+                                        <button data-id="<?php echo $cat['ccategory_id']; ?>" class="btn-delete-cat text-xs font-bold text-gray-400 hover:text-red-500 transition">刪除</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

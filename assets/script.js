@@ -101,28 +101,6 @@ $(document).ready(function() {
     });
 
     let nextCatId = 5; 
-    $('#addCategoryForm').submit(function(e) {
-        e.preventDefault();
-        let catName = $('#new-cat-name').val().trim();
-        if (catName === '') return;
-        let newRow = `
-            <tr class="hover:bg-gray-50/50 transition hidden">
-                <td class="px-6 py-3.5 font-mono text-gray-400">${nextCatId++}</td>
-                <td class="px-6 py-3.5 font-bold text-gray-900 cat-name">${catName}</td>
-                <td class="px-6 py-3.5 text-right"><button class="btn-delete-cat text-xs font-bold text-gray-400 hover:text-red-500 transition">刪除</button></td>
-            </tr>`;
-        let $newRow = $(newRow);
-        $('#category-table tbody').append($newRow);
-        $newRow.fadeIn(300);
-        $('#new-cat-name').val('');
-    });
-
-    $('#category-table').on('click', '.btn-delete-cat', function() {
-        let row = $(this).closest('tr');
-        if (confirm(`確定要刪除「${row.find('.cat-name').text()}」分類嗎？`)) {
-            row.fadeOut(300, function() { $(this).remove(); });
-        }
-    });
 
     $('.btn-toggle-user').click(function() {
         let btn = $(this);
@@ -312,6 +290,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnReserve.innerHTML = originalText;
                 btnReserve.disabled = false;
                 btnReserve.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        });
+    }
+
+    // ==========================================
+    // 🌟 功能 D：管理員新增與刪除分類 (v0.6.2)
+    // ==========================================
+    const addCategoryForm = document.getElementById('addCategoryForm');
+    const categoryTableBody = document.querySelector('#category-table tbody');
+
+    if (addCategoryForm) {
+        addCategoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('new-cat-name');
+            const catName = input.value.trim();
+            if (!catName) return;
+
+            try {
+                const response = await fetch('api/admin_add_category.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category_name: catName })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // 動態組合新分類的 HTML (預設為透明 opacity-0 以便做動畫)
+                    const newRow = `
+                        <tr class="hover:bg-gray-50/50 transition duration-300 opacity-0" id="cat-row-${result.category_id}">
+                            <td class="px-6 py-3.5 font-mono text-gray-400">${result.category_id}</td>
+                            <td class="px-6 py-3.5 font-bold text-gray-900 cat-name">${result.category_name}</td>
+                            <td class="px-6 py-3.5 text-right">
+                                <button data-id="${result.category_id}" class="btn-delete-cat text-xs font-bold text-gray-400 hover:text-red-500 transition">刪除</button>
+                            </td>
+                        </tr>
+                    `;
+                    categoryTableBody.insertAdjacentHTML('beforeend', newRow);
+                    
+                    // 觸發淡入動畫並清空輸入框
+                    setTimeout(() => {
+                        document.getElementById(`cat-row-${result.category_id}`).classList.remove('opacity-0');
+                    }, 50);
+                    input.value = '';
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                console.error('新增分類失敗:', err);
+            }
+        });
+    }
+
+    // 💡 使用「事件委派 (Event Delegation)」來監聽動態產生的刪除按鈕
+    if (categoryTableBody) {
+        categoryTableBody.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-delete-cat')) {
+                const catId = e.target.getAttribute('data-id');
+                const row = document.getElementById(`cat-row-${catId}`);
+                const catName = row.querySelector('.cat-name').textContent;
+
+                // 🛡️ 核彈級警告防呆
+                if (!confirm(`⚠️ 嚴重警告：確定要刪除「${catName}」分類嗎？\n\n這將會連帶將該分類下的【所有書籍與交易紀錄】全數強制抹除，且無法復原！`)) return;
+
+                try {
+                    const response = await fetch('api/admin_delete_category.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category_id: catId })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        // 執行淡出動畫，動畫結束後將 DOM 節點移除
+                        row.classList.add('opacity-0');
+                        setTimeout(() => row.remove(), 300);
+                    } else {
+                        alert(result.message);
+                    }
+                } catch(err) {
+                    console.error('刪除分類失敗:', err);
+                }
             }
         });
     }
