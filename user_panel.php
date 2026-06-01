@@ -159,15 +159,24 @@ $page_title = '個人管理後臺 - 書活 BookLoop';
 
                                 <div class="p-4 bg-gray-50/50 border-t border-gray-50 mt-auto flex gap-2">
                                     <?php if ($record['crecord_status'] === 'pending'): ?>
-                                        <form action="api/cancel_reservation.php" method="POST" class="w-full" onsubmit="return confirm('確定要取消這本書的領取預約嗎？這會重新將書籍釋放給全校同學！');">
+
+                                        <form action="api/cancel_reservation.php" method="POST" class="w-1/2" onsubmit="return confirm('確定要取消這本書的領取預約嗎？這會重新將書籍釋放給全校同學！');">
                                             <input type="hidden" name="ccrecord_id" value="<?php echo $record['ccrecord_id']; ?>">
                                             <button type="submit" class="w-full py-2 bg-white border border-gray-200 text-gray-500 text-xs font-bold rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition shadow-sm">
                                                 ❌ 取消預約
                                             </button>
                                         </form>
+
+                                        <form action="api/complete_transaction.php" method="POST" class="w-1/2" onsubmit="return confirm('確認已經與捐贈者碰面，並拿到實體書籍了嗎？此操作無法復原！');">
+                                            <input type="hidden" name="ccrecord_id" value="<?php echo $record['ccrecord_id']; ?>">
+                                            <button type="submit" class="w-full py-2 bg-brand text-white text-xs font-bold rounded-lg hover:bg-green-700 transition shadow-sm">
+                                                ✅ 已收到書
+                                            </button>
+                                        </form>
+
                                     <?php else: ?>
-                                        <button disabled class="w-full py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
-                                            🎉 本次流轉已完成
+                                        <button disabled class="w-full py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed border border-gray-200">
+                                            🎉 本次流轉已圓滿完成
                                         </button>
                                     <?php endif; ?>
                                 </div>
