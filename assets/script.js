@@ -100,13 +100,6 @@ $(document).ready(function() {
         if (tabId === 'tab-users') $('#content-users').removeClass('hidden');
     });
 
-    $('.btn-ban-book').click(function() {
-        let row = $(this).closest('tr');
-        if (confirm('確定要依據平台內容安全規範，強制下架此二手書籍商品嗎？')) {
-            row.fadeOut(400, function() { $(this).remove(); });
-        }
-    });
-
     let nextCatId = 5; 
     $('#addCategoryForm').submit(function(e) {
         e.preventDefault();
