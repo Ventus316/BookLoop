@@ -200,7 +200,9 @@ $page_title = '最高權限管理中心 - 書活 BookLoop';
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <?php if ($u['urole'] !== 'admin'): ?>
-                                        <button class="btn-toggle-user text-xs font-bold <?php echo $u['status'] === 'active' ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100'; ?> px-3 py-1.5 rounded-lg border transition shadow-sm" data-status="<?php echo $u['status']; ?>">
+                                        <button class="btn-toggle-user text-xs font-bold <?php echo $u['status'] === 'active' ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-green-50 border-green-200 text-green-600 hover:bg-green-100'; ?> px-3 py-1.5 rounded-lg border transition shadow-sm"
+                                            data-status="<?php echo $u['status']; ?>"
+                                            data-id="<?php echo $u['user_id']; ?>">
                                             <?php echo $u['status'] === 'active' ? '🔒 帳號封禁' : '🔓 解除封禁'; ?>
                                         </button>
                                     <?php else: ?>

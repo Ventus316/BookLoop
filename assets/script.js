@@ -102,21 +102,6 @@ $(document).ready(function() {
 
     let nextCatId = 5; 
 
-    $('.btn-toggle-user').click(function() {
-        let btn = $(this);
-        let currentStatus = btn.attr('data-status');
-        let statusCell = btn.closest('tr').find('.user-status-cell');
-        if (currentStatus === 'active') {
-            if (confirm('確定要對該用戶實施帳號封禁懲處嗎？')) {
-                btn.attr('data-status', 'banned').text('🔓 解除封禁').removeClass('bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100').addClass('bg-green-50 border-green-200 text-green-600 hover:bg-green-100');
-                statusCell.html('<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 status-badge">已停權封禁</span>');
-            }
-        } else {
-            btn.attr('data-status', 'active').text('🔒 帳號封禁').removeClass('bg-green-50 border-green-200 text-green-600 hover:bg-green-100').addClass('bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100');
-            statusCell.html('<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 status-badge">正常運作中</span>');
-        }
-    });
-
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -370,6 +355,62 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } catch(err) {
                     console.error('刪除分類失敗:', err);
+                }
+            }
+        });
+    }
+
+    // ==========================================
+    // 🌟 功能 E：管理員切換用戶狀態 (v0.6.4)
+    // ==========================================
+    const usersTableBody = document.querySelector('#content-users tbody');
+
+    if (usersTableBody) {
+        usersTableBody.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-toggle-user')) {
+                const btn = e.target;
+                const userId = btn.getAttribute('data-id');
+                const currentStatus = btn.getAttribute('data-status');
+                const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+                const actionText = newStatus === 'banned' ? '停權封禁' : '解除封禁';
+
+                if (!confirm(`確定要對該用戶執行「${actionText}」操作嗎？`)) return;
+
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '處理中...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch('api/admin_toggle_user_status.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, status: newStatus })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        // 成功後動態切換 UI 狀態
+                        btn.setAttribute('data-status', newStatus);
+                        const statusCell = btn.closest('tr').querySelector('.user-status-cell');
+
+                        if (newStatus === 'banned') {
+                            btn.textContent = '🔓 解除封禁';
+                            btn.className = 'btn-toggle-user text-xs font-bold bg-green-50 border-green-200 text-green-600 hover:bg-green-100 px-3 py-1.5 rounded-lg border transition shadow-sm';
+                            statusCell.innerHTML = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 status-badge">已停權封禁</span>';
+                        } else {
+                            btn.textContent = '🔒 帳號封禁';
+                            btn.className = 'btn-toggle-user text-xs font-bold bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-lg border transition shadow-sm';
+                            statusCell.innerHTML = '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 status-badge">正常運作中</span>';
+                        }
+                    } else {
+                        alert(result.message);
+                        btn.innerHTML = originalHTML;
+                    }
+                } catch(err) {
+                    console.error('狀態更新失敗:', err);
+                    btn.innerHTML = originalHTML;
+                } finally {
+                    btn.disabled = false;
                 }
             }
         });
